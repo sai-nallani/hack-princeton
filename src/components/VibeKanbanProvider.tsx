@@ -1,11 +1,4 @@
-"use client";
-
-import dynamic from "next/dynamic";
-
-const VibeKanbanWebCompanion = dynamic(
-  () => import("vibe-kanban-web-companion").then((mod) => mod.VibeKanbanWebCompanion),
-  { ssr: false }
-);
+import { VibeKanbanWebCompanion } from "vibe-kanban-web-companion";
 
 export function VibeKanbanProvider() {
   return <VibeKanbanWebCompanion />;
