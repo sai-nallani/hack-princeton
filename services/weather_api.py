@@ -1,4 +1,5 @@
 import aiohttp
+import ssl
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
@@ -12,10 +13,16 @@ class AviationWeatherAPI:
     
     def __init__(self):
         self.session: Optional[aiohttp.ClientSession] = None
+        # Create SSL context that doesn't verify certificates
+        self.ssl_context = ssl.create_default_context()
+        self.ssl_context.check_hostname = False
+        self.ssl_context.verify_mode = ssl.CERT_NONE
     
     async def get_session(self):
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession()
+            # Create connector with SSL verification disabled
+            connector = aiohttp.TCPConnector(ssl=self.ssl_context)
+            self.session = aiohttp.ClientSession(connector=connector)
         return self.session
     
     async def get_metar(self, station_id: str) -> Optional[Dict]:
@@ -152,14 +159,53 @@ class AviationWeatherAPI:
                     return None
                 
                 taf = data[0]
+                forecasts = taf.get("fcsts", [])
+                
+                # Extract first forecast period for current conditions
+                first_forecast = forecasts[0] if forecasts else {}
+                
+                # Parse forecast periods for predictive graph
+                forecast_periods = []
+                for fcst in forecasts:
+                    # Format time from validTimeFrom
+                    valid_from = fcst.get("validTimeFrom", "")
+                    time_str = ""
+                    if valid_from:
+                        try:
+                            # Parse ISO format datetime and format as time
+                            dt = datetime.fromisoformat(valid_from.replace("Z", "+00:00"))
+                            time_str = dt.strftime("%H:%M")
+                        except:
+                            time_str = valid_from[:5] if len(valid_from) >= 5 else valid_from
+                    
+                    forecast_periods.append({
+                        "time": time_str,
+                        "temperature": fcst.get("temp"),
+                        "wind_speed": fcst.get("wspd"),
+                        "wind_direction": fcst.get("wdir"),
+                        "visibility": fcst.get("visib"),
+                        "ceiling": fcst.get("cig"),
+                        "flight_category": fcst.get("fltcat"),
+                        "conditions": fcst.get("wxString", ""),
+                        "valid_from": fcst.get("validTimeFrom"),
+                        "valid_to": fcst.get("validTimeTo"),
+                    })
                 
                 return {
                     "station": taf.get("icaoId"),
+                    "observation_time": taf.get("issueTime"),  # For compatibility
                     "issue_time": taf.get("issueTime"),
                     "valid_from": taf.get("validTimeFrom"),
                     "valid_to": taf.get("validTimeTo"),
                     "raw_text": taf.get("rawTAF"),
-                    "forecast": taf.get("fcsts", [])
+                    "temperature": first_forecast.get("temp"),  # Current/First forecast
+                    "wind_speed": first_forecast.get("wspd"),
+                    "wind_direction": first_forecast.get("wdir"),
+                    "visibility": first_forecast.get("visib"),
+                    "ceiling": first_forecast.get("cig"),
+                    "flight_category": first_forecast.get("fltcat"),
+                    "conditions": first_forecast.get("wxString", ""),
+                    "forecast": forecast_periods  # Array of forecast periods for graph
                 }
         
         except Exception as e:
