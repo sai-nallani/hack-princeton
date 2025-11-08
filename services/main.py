@@ -6,9 +6,9 @@ import json
 import redis
 import requests
 
-TARGET_LAT = 33.637
-TARGET_LON = -84.4333
-MAX_DISTANCE_NM = 5  # nautical miles
+TARGET_LAT = 33.6410564
+TARGET_LON = -84.4421781
+MAX_DISTANCE_NM = 40  # nautical miles
 
 async def poll_opensky():
     """
@@ -27,7 +27,7 @@ async def poll_opensky():
         except Exception as e:
             print(f"Error polling airplanes.live API: {e}")
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(1)
 
 app = FastAPI(title="AirGuardian API")
 
