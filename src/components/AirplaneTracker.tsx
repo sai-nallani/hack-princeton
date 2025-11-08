@@ -308,7 +308,7 @@ export function AirplaneTracker() {
   }
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-full">
       <div ref={mapContainer} className="absolute inset-0" />
 
       {/* Info panel with altitude legend */}
