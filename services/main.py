@@ -1,3 +1,8 @@
+"""
+cd /Users/olivercho/Desktop/Programming/hack-princeton/hack-princeton
+PYTHONPATH=. uvicorn services.main:app --host 0.0.0.0 --port 8000 --reload
+"""
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
@@ -5,6 +10,7 @@ import asyncio
 import json
 import redis
 import requests
+from routers.weather import router as weather_router
 
 TARGET_LAT = 33.6410564
 TARGET_LON = -84.4421781
@@ -39,6 +45,8 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+app.include_router(weather_router)
 
 class ConnectionManager:
     def __init__(self):
