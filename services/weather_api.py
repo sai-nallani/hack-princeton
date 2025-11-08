@@ -1,3 +1,4 @@
+import aiohttp
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
@@ -13,6 +14,8 @@ class AviationWeatherAPI:
         self.session: Optional[aiohttp.ClientSession] = None
     
     async def get_session(self):
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession()
         return self.session
     
     async def get_metar(self, station_id: str) -> Optional[Dict]:
