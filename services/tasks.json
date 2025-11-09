@@ -1,0 +1,110 @@
+[
+  {
+    "aircraft_icao24": "ada499",
+    "aircraft_callsign": "N9786T",
+    "priority": "MEDIUM",
+    "category": "Low Altitude",
+    "description": "Cessna 172 (N9786T) operating at 2100ft MSL, position Lat 33.884257 Lon -84.89645, groundspeed 81.2kt, heading 308\u00b0. This altitude is below the minimum vectoring altitude (MVA) for Atlanta Class B airspace in this sector (approximately 3000ft MSL); potential Class B airspace penetration without clearance as squawking 1200 (VFR). No active NOTAMs or TFRs noted due to search limitations. Recommended ATC action: Contact N9786T, verify Class B clearance, issue traffic advisory if necessary, and vector to maintain separation.",
+    "fingerprint": "ada499_Low Altitude_MEDIUM",
+    "id": 895781,
+    "created_at": "2025-11-09T00:28:01.132590+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:01.132590+00:00"
+  },
+  {
+    "aircraft_icao24": "a3ac1e",
+    "aircraft_callsign": "N336AE",
+    "priority": "MEDIUM",
+    "category": "Low Altitude",
+    "description": "Beechcraft B06 (N336AE) operating at 2100ft MSL, position Lat 33.731239 Lon -84.749622, groundspeed 95.6kt, heading 248.53\u00b0. This altitude is below the minimum vectoring altitude (MVA) for Atlanta Class B airspace in this sector (approximately 3000ft MSL); potential Class B airspace penetration without clearance as squawking 1200 (VFR). No active NOTAMs or TFRs noted due to search limitations. Recommended ATC action: Contact N336AE, verify Class B clearance, issue traffic advisory if necessary, and vector to maintain separation.",
+    "fingerprint": "a3ac1e_Low Altitude_MEDIUM",
+    "id": 941358,
+    "created_at": "2025-11-09T00:28:01.132619+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:01.132619+00:00"
+  },
+  {
+    "aircraft_icao24": "aa202a",
+    "aircraft_callsign": "N7510T",
+    "priority": "LOW",
+    "category": "Low Altitude",
+    "description": "N7510T, type R44, at 1725ft MSL, position Lat 33.766014 Lon -84.494076, groundspeed 85.1kt, heading 272.02\u00b0, squawk 1200. Position approximately 18NM west of KATL; terrain elevation approximately 900-1100ft MSL, resulting in altitude approximately 625-825ft AGL. Below typical pattern altitudes and close to minimum safe altitude per FAR 91.119(c) over congested areas if applicable. Monitor for low-level operations; advisory to pilot of minimum altitude requirements.",
+    "fingerprint": "aa202a_Low Altitude_LOW",
+    "id": 689820,
+    "created_at": "2025-11-09T00:28:01.132627+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:29.910872+00:00"
+  },
+  {
+    "aircraft_icao24": "a107fb",
+    "aircraft_callsign": "N166AC",
+    "priority": "LOW",
+    "category": "Low Altitude",
+    "description": "Beechcraft BE76 (N166AC) operating at 4500ft MSL, position Lat 34.240173 Lon -84.709747, groundspeed 113.6kt, heading 286.36\u00b0. Altitude within outer shelf of Atlanta Class B airspace; squawking 1200 (VFR), verify no penetration of inner core without clearance. No active NOTAMs or TFRs noted due to search limitations. Recommended ATC action: Monitor for airspace compliance, issue advisory if entering controlled airspace.",
+    "fingerprint": "a107fb_Low Altitude_LOW",
+    "id": 321567,
+    "created_at": "2025-11-09T00:28:01.132635+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:01.132635+00:00"
+  },
+  {
+    "aircraft_icao24": "aad284",
+    "aircraft_callsign": "N797FA",
+    "priority": "LOW",
+    "category": "Low Altitude",
+    "description": "N797FA, type C172, at 3650ft MSL, position Lat 33.204687 Lon -84.496354, groundspeed 87.7kt, heading 155.77\u00b0, squawk 1200. Position approximately 20NM south-southeast of KATL; terrain elevation in area approximately 800-1000ft MSL (per USGS data), resulting in low altitude approximately 2650-2850ft AGL. While above minimum safe altitude per FAR 91.119 over unpopulated areas, monitor for CFIT risk during VFR operations. Advisory: Issue terrain awareness advisory if requested.",
+    "fingerprint": "aad284_Low Altitude_LOW",
+    "id": 624559,
+    "created_at": "2025-11-09T00:28:01.132642+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:29.910861+00:00"
+  },
+  {
+    "aircraft_icao24": "a3ac1e",
+    "aircraft_callsign": "N336AE",
+    "priority": "MEDIUM",
+    "category": "Airspace Concern",
+    "description": "N336AE, type B06, at 2100ft MSL, position Lat 33.728586 Lon -84.757862, groundspeed 95.3kt, heading 249.09\u00b0, squawk N/A, possible penetration of Atlanta Class B airspace without clearance. Atlanta Class B inner core extends to approximately 3NM radius from KATL at up to 10,000ft MSL; this position is approximately 15NM northwest of KATL, likely within Class B shelf (up to 7,000ft MSL). No transponder data observed. Recommend contact aircraft on appropriate frequency, verify flight rules and clearance status, issue traffic advisory if necessary per FAA JO 7110.65.",
+    "fingerprint": "a3ac1e_Airspace Concern_MEDIUM",
+    "id": 512927,
+    "created_at": "2025-11-09T00:28:29.910315+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:29.910315+00:00"
+  },
+  {
+    "aircraft_icao24": "ada499",
+    "aircraft_callsign": "N9786T",
+    "priority": "MEDIUM",
+    "category": "Airspace Concern",
+    "description": "N9786T, type C172, at 2025ft MSL, position Lat 33.887655 Lon -84.901886, groundspeed 73.8kt, heading 305.63\u00b0, squawk 1200, possible operation in Atlanta Class B airspace without clearance. Position approximately 18NM northwest of KATL, within Class B outer area (up to 4,000ft MSL in some sectors). VFR squawk observed. Recommend contact aircraft, advise of Class B airspace, request intentions, and provide traffic advisories to nearby high-altitude traffic per FAA JO 7110.65.",
+    "fingerprint": "ada499_Airspace Concern_MEDIUM",
+    "id": 454303,
+    "created_at": "2025-11-09T00:28:29.910330+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:29.910330+00:00"
+  },
+  {
+    "aircraft_icao24": "a107fb",
+    "aircraft_callsign": "N166AC",
+    "priority": "LOW",
+    "category": "Airspace Concern",
+    "description": "N166AC, type BE76, at 4500ft MSL, position Lat 34.242737 Lon -84.719948, groundspeed 111.4kt, heading 286.16\u00b0, squawk 1200. Position approximately 35NM northwest of KATL, potentially approaching Atlanta Class B airspace outer shelf (up to 4,000-7,000ft MSL depending on sector). VFR operations observed. Recommend monitor trajectory and contact aircraft if entering Class B without clearance, issue airspace advisory per FAA JO 7110.65.",
+    "fingerprint": "a107fb_Airspace Concern_LOW",
+    "id": 987163,
+    "created_at": "2025-11-09T00:28:29.910340+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:29.910340+00:00"
+  },
+  {
+    "aircraft_icao24": "a32718",
+    "aircraft_callsign": "DAL1267",
+    "priority": "LOW",
+    "category": "Unusual Pattern",
+    "description": "DAL1267, type A321, registration N302DN, at 10750ft MSL, position Lat 33.456573 Lon -84.505353, groundspeed 332.0kt, vertical rate +1088ft/min, heading 89.65\u00b0, squawk 3105. Appears to be on descent into KATL (approximately 8NM east), but high groundspeed for terminal area may indicate non-standard approach profile. No web research findings of NOTAMs affecting arrivals (searches limited). Monitor for speed compliance with STAR procedures; advise pilot to expedite descent if necessary.",
+    "fingerprint": "a32718_Unusual Pattern_LOW",
+    "id": 64318,
+    "created_at": "2025-11-09T00:28:29.910343+00:00",
+    "resolved": false,
+    "last_seen": "2025-11-09T00:28:29.910343+00:00"
+  }
+]

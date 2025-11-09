@@ -39,3 +39,18 @@ build
 
 # TypeScript
 *.tsbuildinfo
+
+# Redis
+dump.rdb
+*.rdb
+appendonly.aof
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
