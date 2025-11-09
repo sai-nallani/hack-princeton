@@ -30,6 +30,7 @@ import redis
 import requests
 from routers.weather import router as weather_router
 from routers.tasks import router as tasks_router
+from routers.tts import router as tts_router
 from services.analysis_service import run_analysis
 
 TARGET_LAT = 33.6410564
@@ -107,6 +108,7 @@ app.add_middleware(
 # Include routers
 app.include_router(weather_router)
 app.include_router(tasks_router)
+app.include_router(tts_router)
 
 class ConnectionManager:
     def __init__(self):
