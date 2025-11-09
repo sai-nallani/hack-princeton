@@ -2,124 +2,124 @@ AIRCRAFT DATA:
 Total aircraft: 42
 
 Aircraft 1:
-  Hex/ICAO24: a298b2
-  Callsign: N26675
-  Registration: N26675
-  Type: AA5
-  Position: Lat 33.711548, Lon -85.046825
-  Altitude: 3550ft MSL
-  Groundspeed: 110.4kt
+  Hex/ICAO24: a6f00d
+  Callsign: AAL3101
+  Registration: N546UW
+  Type: A321
+  Position: Lat 33.859085, Lon -85.101555
+  Altitude: 34025ft MSL
+  Groundspeed: 390.6kt
   Vertical Rate: 0ft/min
-  Heading: 196.3°
-  Squawk: 1200
+  Heading: 263.38°
+  Squawk: 7103
 
 Aircraft 2:
-  Hex/ICAO24: a92ee2
-  Callsign: PXG691
-  Registration: N691ES
-  Type: C560
-  Position: Lat 33.48793, Lon -84.96546
-  Altitude: 35000ft MSL
-  Groundspeed: 447.8kt
-  Vertical Rate: -64ft/min
-  Heading: 148.05°
-  Squawk: 5630
+  Hex/ICAO24: a1bc9f
+  Callsign: N2105X
+  Registration: N2105X
+  Type: C172
+  Position: Lat 33.23881, Lon -84.844497
+  Altitude: 3900ft MSL
+  Groundspeed: 119.0kt
+  Vertical Rate: -576ft/min
+  Heading: 21.18°
+  Squawk: 1200
 
 Aircraft 3:
-  Hex/ICAO24: a0f44c
-  Callsign: DAL664
-  Registration: N1602
-  Type: B763
-  Position: Lat 33.910885, Lon -84.853249
-  Altitude: 12075ft MSL
-  Groundspeed: 404.5kt
+  Hex/ICAO24: a5cc11
+  Callsign: UAL2075
+  Registration: N47280
+  Type: B38M
+  Position: Lat 33.120163, Lon -84.773914
+  Altitude: 37000ft MSL
+  Groundspeed: 436.9kt
   Vertical Rate: 0ft/min
-  Heading: 128.17°
-  Squawk: 1617
+  Heading: 173.43°
+  Squawk: 6025
 
 Aircraft 4:
-  Hex/ICAO24: a17847
-  Callsign: AAY2505
-  Registration: N194NV
-  Type: UNKNOWN
-  Position: Lat 34.115994, Lon -84.81308
-  Altitude: 35000ft MSL
-  Groundspeed: 456.9kt
-  Vertical Rate: 0ft/min
-  Heading: 165.81°
-  Squawk: 6634
+  Hex/ICAO24: ac3110
+  Callsign: N885GT
+  Registration: N885GT
+  Type: C172
+  Position: Lat 34.013684, Lon -84.606671
+  Altitude: groundft MSL
+  Groundspeed: 0.0kt
+  Vertical Rate: N/Aft/min
+  Heading: N/A°
+  Squawk: 1200
 
 Aircraft 5:
-  Hex/ICAO24: ab9de9
-  Callsign: DAL1828
-  Registration: N848DN
-  Type: B739
-  Position: Lat 33.312223, Lon -84.803635
-  Altitude: 12050ft MSL
-  Groundspeed: 373.5kt
-  Vertical Rate: 128ft/min
-  Heading: 60.48°
-  Squawk: 2101
+  Hex/ICAO24: ad251e
+  Callsign: N946TC
+  Registration: N946TC
+  Type: E550
+  Position: Lat 33.283686, Lon -84.606161
+  Altitude: 3075ft MSL
+  Groundspeed: 201.5kt
+  Vertical Rate: N/Aft/min
+  Heading: 128.35°
+  Squawk: 5172
 
 Aircraft 6:
-  Hex/ICAO24: ac9f52
-  Callsign: AAL922R
-  Registration: N912NN
-  Type: B738
-  Position: Lat 34.041836, Lon -84.797745
-  Altitude: 34000ft MSL
-  Groundspeed: 375.4kt
-  Vertical Rate: 0ft/min
-  Heading: 258.63°
-  Squawk: 2213
-
-Aircraft 7:
-  Hex/ICAO24: a91d8e
-  Callsign: DAL1594
-  Registration: N687DL
-  Type: B752
-  Position: Lat 33.249939, Lon -84.669598
-  Altitude: 19700ft MSL
-  Groundspeed: 419.6kt
-  Vertical Rate: 2240ft/min
-  Heading: 173.57°
-  Squawk: 2571
-
-Aircraft 8:
   Hex/ICAO24: a4cacb
   Callsign: N408EP
   Registration: N408EP
   Type: C172
-  Position: Lat 33.333115, Lon -84.666138
-  Altitude: 3750ft MSL
-  Groundspeed: 98.2kt
-  Vertical Rate: -128ft/min
-  Heading: 144.53°
+  Position: Lat 33.367676, Lon -84.58819
+  Altitude: 1700ft MSL
+  Groundspeed: 56.6kt
+  Vertical Rate: 704ft/min
+  Heading: 261.87°
+  Squawk: 1200
+
+Aircraft 7:
+  Hex/ICAO24: a475d8
+  Callsign: FFT2779
+  Registration: N387FR
+  Type: A20N
+  Position: Lat 33.716995, Lon -84.582843
+  Altitude: 8450ft MSL
+  Groundspeed: 285.8kt
+  Vertical Rate: 3200ft/min
+  Heading: 353.57°
+  Squawk: 1734
+
+Aircraft 8:
+  Hex/ICAO24: aa01b5
+  Callsign: N744DD
+  Registration: N744DD
+  Type: PA46
+  Position: Lat 33.324, Lon -84.520008
+  Altitude: 1900ft MSL
+  Groundspeed: 88.2kt
+  Vertical Rate: -384ft/min
+  Heading: 308.56°
   Squawk: 1200
 
 Aircraft 9:
-  Hex/ICAO24: a0ed34
-  Callsign: SUB61
-  Registration: N159SF
-  Type: B190
-  Position: Lat 34.277437, Lon -84.663677
-  Altitude: 11100ft MSL
-  Groundspeed: 257.5kt
-  Vertical Rate: N/Aft/min
-  Heading: 330.45°
-  Squawk: 7167
+  Hex/ICAO24: a5237f
+  Callsign: DAL147
+  Registration: N430DX
+  Type: UNKNOWN
+  Position: Lat 33.634781, Lon -84.500894
+  Altitude: 2900ft MSL
+  Groundspeed: 207.0kt
+  Vertical Rate: 512ft/min
+  Heading: 270.0°
+  Squawk: 3104
 
 Aircraft 10:
-  Hex/ICAO24: a2668b
-  Callsign: MXY721
-  Registration: N254BZ
-  Type: BCS3
-  Position: Lat 33.960434, Lon -84.649714
-  Altitude: 33000ft MSL
-  Groundspeed: 534.2kt
+  Hex/ICAO24: a36713
+  Callsign: N3181Q
+  Registration: N3181Q
+  Type: R44
+  Position: Lat 33.766983, Lon -84.456332
+  Altitude: 1725ft MSL
+  Groundspeed: 108.7kt
   Vertical Rate: N/Aft/min
-  Heading: 96.23°
-  Squawk: 3116
+  Heading: 104.93°
+  Squawk: 1200
 
 
 WEATHER DATA:
