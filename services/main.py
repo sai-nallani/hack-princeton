@@ -1,6 +1,10 @@
 """
 FastAPI application entry point
 
+Run with:
+    cd /Users/sainallani/Projects/hack-princeton-1
+    PYTHONPATH=. uvicorn services.main:app --host 0.0.0.0 --port 8000 --reload
+"""
 import sys
 from pathlib import Path
 
@@ -41,15 +45,9 @@ async def poll_opensky():
             # Cache in Redis
             r.set('planes', json.dumps(planes), ex=600)  # 10 minutes
             print(f"Cached {len(planes)} planes within {MAX_DISTANCE_NM} nm")
-Run with:
-    cd /Users/olivercho/Desktop/Programming/hack-princeton/hack-princeton
-    PYTHONPATH=. uvicorn services.main:app --host 0.0.0.0 --port 8000 --reload
-"""
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
-from routers import weather, planes, websocket, health, tts
-from services.planes_service import planes_service
+        except Exception as e:
+            print(f"Error polling airplanes.live API: {e}")
 
         await asyncio.sleep(1)
 
@@ -83,7 +81,6 @@ async def continuous_analysis():
             await asyncio.sleep(5)  # Wait longer on error
 
 
-app = FastAPI(title="AirGuardian API")
 app = FastAPI(
     title="AirGuardian API",
     description="API for monitoring aircraft and weather conditions",
@@ -99,6 +96,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+# Include routers
 app.include_router(weather_router)
 app.include_router(tasks_router)
 
@@ -139,25 +137,20 @@ async def get_planes():
         # Return all data as-is from the airplanes.live API
         return planes
     return []
-# Include routers
-app.include_router(health.router)
-app.include_router(weather.router)
-app.include_router(planes.router)
-app.include_router(websocket.router)
-app.include_router(tts.router)
 
-@app.on_event("startup")
-async def startup_event():
-    """Start background tasks on application startup"""
-    planes_service.start_polling()
-    print("AirGuardian API started - background polling initiated")
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources on application shutdown"""
-    planes_service.stop_polling()
-    print("AirGuardian API shutting down")
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            print(f"Received: {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 if __name__ == "__main__":
     import uvicorn
