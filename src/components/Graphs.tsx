@@ -72,7 +72,6 @@ export default function Graphs() {
   const [metarData, setMetarData] = useState<WeatherData | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineDataPoint[]>([]);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(true);
-  const [showDebugSidebar, setShowDebugSidebar] = useState<boolean>(false);
 
   // Fetch airplane count
   useEffect(() => {
@@ -580,15 +579,7 @@ export default function Graphs() {
   const flightCategoryStatus = getFlightCategoryStatus();
 
   return (
-    <div className="h-full w-full flex flex-col gap-4 p-4 relative">
-      {/* Debug Sidebar Toggle Button */}
-      <button
-        onClick={() => setShowDebugSidebar(!showDebugSidebar)}
-        className="fixed top-4 right-4 z-50 bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-lg border border-gray-600 text-xs font-semibold shadow-lg transition-colors"
-        title="Toggle Debug Sidebar"
-      >
-        {showDebugSidebar ? 'Hide' : 'Show'} Debug
-      </button>
+    <div className="h-full w-full flex flex-col gap-4 p-4 relative bg-black">
 
       {/* Top Row: All Weather Components */}
       <div className="flex gap-4 w-full">
@@ -596,11 +587,11 @@ export default function Graphs() {
         <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '22%' }}>
           <div className="text-xs font-semibold text-gray-200 mb-1">
             Wind Speed (kt) - {metarData?.station || weatherData?.station || 'KATL'}
-        </div>
+          </div>
         
-        {weatherLoading ? (
+          {weatherLoading ? (
             <div className="text-gray-400 text-xs">Loading weather data...</div>
-        ) : timelineData.length > 0 ? (
+          ) : timelineData.length > 0 ? (
             <div className="h-32 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={timelineData}>
@@ -682,7 +673,7 @@ export default function Graphs() {
               No weather data available
             </div>
           )}
-            </div>
+        </div>
 
         {/* Visibility Chart Box */}
         <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '22%' }}>
@@ -772,25 +763,25 @@ export default function Graphs() {
           ) : (
             <div className="text-gray-400 text-xs">
               No weather data available
-              </div>
-          )}
-              </div>
-
-      {/* Airplane Count Box */}
-      <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-4 flex flex-col gap-2">
-        <div className="text-2xl font-bold text-gray-100">
-          {isLoading ? '...' : planeCount}
-              </div>
-        <div className="text-xs text-gray-400">
-          # of airplanes
             </div>
-        <div className="text-xs text-gray-400">
-          Last updated: {formatTime(lastUpdate)}
-          </div>
-      </div>
+          )}
+        </div>
 
-      {/* Flight Category Status Box */}
-      <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-4 flex flex-col gap-2" style={{ width: '18%', minWidth: '180px' }}>
+          {/* Airplane Count Box */}
+        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-4 flex flex-col gap-2">
+          <div className="text-2xl font-bold text-gray-100">
+            {isLoading ? '...' : planeCount}
+          </div>
+          <div className="text-xs text-gray-400">
+            # of airplanes
+          </div>
+          <div className="text-xs text-gray-400">
+            Last updated: {formatTime(lastUpdate)}
+          </div>
+        </div>
+
+        {/* Flight Category Status Box */}
+        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-4 flex flex-col gap-2" style={{ width: '18%', minWidth: '180px' }}>
         <div className="text-sm font-semibold text-gray-200 mb-2">
           Flight Category
         </div>
@@ -894,8 +885,8 @@ export default function Graphs() {
         )}
       </div>
 
-      {/* Wind Radar Chart Box */}
-      <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '18%' }}>
+        {/* Wind Radar Chart Box */}
+        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '18%' }}>
         <div className="text-xs font-semibold text-gray-200 mb-1">
           Wind Direction & Speed
         </div>
@@ -1004,198 +995,8 @@ export default function Graphs() {
             No wind data available
           </div>
         )}
-              </div>
-            </div>
-            
-      {/* Debug Sidebar */}
-      {showDebugSidebar && (
-        <div className="fixed top-0 right-0 h-full w-96 bg-gray-900 border-l border-gray-700 shadow-2xl z-40 overflow-y-auto">
-          <div className="p-4 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-100">Debug: Parsed Weather Data</h2>
-              <button
-                onClick={() => setShowDebugSidebar(false)}
-                className="text-gray-400 hover:text-gray-200 text-xl"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* METAR Data Section */}
-            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-              <h3 className="text-sm font-semibold text-gray-200 mb-3">METAR Data</h3>
-              {metarData ? (
-                <div className="space-y-2 text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-gray-400">Station:</div>
-                    <div className="text-gray-200 font-mono">{metarData.station || 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Observation Time:</div>
-                    <div className="text-gray-200 font-mono">{metarData.observation_time || 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Temperature:</div>
-                    <div className="text-gray-200 font-mono">{metarData.temperature !== undefined ? `${metarData.temperature}°C` : 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Wind Speed:</div>
-                    <div className="text-gray-200 font-mono">{metarData.wind_speed !== undefined ? `${metarData.wind_speed} kt` : 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Wind Direction:</div>
-                    <div className="text-gray-200 font-mono">{metarData.wind_direction !== undefined ? `${metarData.wind_direction}°` : 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Visibility:</div>
-                    <div className="text-gray-200 font-mono">{metarData.visibility !== undefined ? `${metarData.visibility} mi` : 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Ceiling:</div>
-                    <div className="text-gray-200 font-mono">{metarData.ceiling !== undefined ? `${metarData.ceiling} ft` : 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Flight Category:</div>
-                    <div className="text-gray-200 font-mono">{metarData.flight_category || 'N/A'}</div>
-                    
-                    <div className="text-gray-400">Conditions:</div>
-                    <div className="text-gray-200 font-mono">{metarData.conditions || 'N/A'}</div>
-                  </div>
-                  
-                  {(metarData as any).raw_text && (
-                    <div className="mt-3 pt-3 border-t border-gray-700">
-                      <div className="text-gray-400 mb-1">Raw METAR:</div>
-                      <div className="text-gray-300 font-mono text-xs bg-gray-950 p-2 rounded break-all">
-                        {(metarData as any).raw_text}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-3 pt-3 border-t border-gray-700">
-                    <div className="text-gray-400 mb-1">Full JSON:</div>
-                    <pre className="text-gray-300 font-mono text-xs bg-gray-950 p-2 rounded overflow-x-auto">
-                      {JSON.stringify(metarData, null, 2)}
-                    </pre>
-            </div>
-          </div>
-        ) : (
-                <div className="text-gray-400 text-xs">No METAR data available</div>
-              )}
-          </div>
-
-            {/* TAF Data Section */}
-            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-              <h3 className="text-sm font-semibold text-gray-200 mb-3">TAF Data</h3>
-              {weatherData ? (
-                <div className="space-y-2 text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-gray-400">Station:</div>
-                    <div className="text-gray-200 font-mono">{weatherData.station || 'N/A'}</div>
-                    
-                    {(weatherData as any).issue_time && (
-                      <>
-                        <div className="text-gray-400">Issue Time:</div>
-                        <div className="text-gray-200 font-mono">{(weatherData as any).issue_time || 'N/A'}</div>
-                      </>
-                    )}
-                    
-                    {(weatherData as any).valid_from && (
-                      <>
-                        <div className="text-gray-400">Valid From:</div>
-                        <div className="text-gray-200 font-mono">{(weatherData as any).valid_from || 'N/A'}</div>
-                      </>
-                    )}
-                    
-                    {(weatherData as any).valid_to && (
-                      <>
-                        <div className="text-gray-400">Valid To:</div>
-                        <div className="text-gray-200 font-mono">{(weatherData as any).valid_to || 'N/A'}</div>
-                      </>
-                    )}
-                    
-                    <div className="text-gray-400">Forecast Periods:</div>
-                    <div className="text-gray-200 font-mono">{weatherData.forecast?.length || 0}</div>
       </div>
-                  
-                  {(weatherData as any).raw_text && (
-                    <div className="mt-3 pt-3 border-t border-gray-700">
-                      <div className="text-gray-400 mb-1">Raw TAF:</div>
-                      <div className="text-gray-300 font-mono text-xs bg-gray-950 p-2 rounded break-all">
-                        {(weatherData as any).raw_text}
       </div>
-                    </div>
-                  )}
-                  
-                  {weatherData.forecast && weatherData.forecast.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-700">
-                      <div className="text-gray-400 mb-2">Forecast Periods:</div>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {weatherData.forecast.map((period, idx) => (
-                          <div key={idx} className="bg-gray-950 p-2 rounded text-xs">
-                            <div className="text-gray-300 font-semibold mb-1">Period {idx + 1}</div>
-                            <div className="grid grid-cols-2 gap-1 text-gray-400">
-                              {period.valid_from && (
-                                <>
-                                  <div>Valid From:</div>
-                                  <div className="text-gray-300 font-mono">{period.valid_from}</div>
-                                </>
-                              )}
-                              {period.valid_to && (
-                                <>
-                                  <div>Valid To:</div>
-                                  <div className="text-gray-300 font-mono">{period.valid_to}</div>
-                                </>
-                              )}
-                              {period.wind_speed !== undefined && (
-                                <>
-                                  <div>Wind Speed:</div>
-                                  <div className="text-gray-300 font-mono">{period.wind_speed} kt</div>
-                                </>
-                              )}
-                              {period.wind_direction !== undefined && (
-                                <>
-                                  <div>Wind Direction:</div>
-                                  <div className="text-gray-300 font-mono">{period.wind_direction}°</div>
-                                </>
-                              )}
-                              {period.visibility !== undefined && (
-                                <>
-                                  <div>Visibility:</div>
-                                  <div className="text-gray-300 font-mono">{period.visibility} mi</div>
-                                </>
-                              )}
-                              {period.ceiling !== undefined && (
-                                <>
-                                  <div>Ceiling:</div>
-                                  <div className="text-gray-300 font-mono">{period.ceiling} ft</div>
-                                </>
-                              )}
-                              {period.flight_category && (
-                                <>
-                                  <div>Flight Category:</div>
-                                  <div className="text-gray-300 font-mono">{period.flight_category}</div>
-                                </>
-                              )}
-                              {period.conditions && (
-                                <>
-                                  <div>Conditions:</div>
-                                  <div className="text-gray-300 font-mono">{period.conditions}</div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-3 pt-3 border-t border-gray-700">
-                    <div className="text-gray-400 mb-1">Full JSON:</div>
-                    <pre className="text-gray-300 font-mono text-xs bg-gray-950 p-2 rounded overflow-x-auto max-h-64 overflow-y-auto">
-                      {JSON.stringify(weatherData, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-gray-400 text-xs">No TAF data available</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

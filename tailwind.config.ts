@@ -11,6 +11,9 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        tech: ['JetBrains Mono', 'Courier New', 'Monaco', 'Menlo', 'monospace'],
+      },
     },
   },
   plugins: [],

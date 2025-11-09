@@ -406,10 +406,10 @@ async def run_analysis() -> List[Dict]:
     planes = get_redis_planes()
     
     if not planes:
-        print("No aircraft data in Redis")
+        print("⚠️ No aircraft data in Redis - skipping analysis")
         return []
     
-    print("Running analysis...")
+    print(f"🔄 Running analysis on {len(planes)} aircraft...")
     # Get weather data (using first aircraft's position as reference)
     weather_data = None
     if planes and planes[0].get('lat') and planes[0].get('lon'):

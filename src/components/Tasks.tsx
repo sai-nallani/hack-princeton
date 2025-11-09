@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Card from './Card';
 
 interface Task {
   id: number;
@@ -64,70 +65,14 @@ export default function Tasks() {
     fetchTasks();
     
     // Refresh tasks every 10 seconds
-    const interval = setInterval(fetchTasks, 60000);
+    const interval = setInterval(fetchTasks, 10000);
     
     return () => clearInterval(interval);
   }, []);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toUpperCase()) {
-      case 'HIGH':
-        return 'bg-red-500 text-white';
-      case 'MEDIUM':
-        return 'bg-yellow-500 text-white';
-      case 'LOW':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      'Weather Hazard': 'bg-orange-100 text-orange-800',
-      'Low Altitude': 'bg-red-100 text-red-800',
-      'Unusual Pattern': 'bg-purple-100 text-purple-800',
-      'Speed Warning': 'bg-yellow-100 text-yellow-800',
-      'Altitude Warning': 'bg-pink-100 text-pink-800',
-      'Other': 'bg-gray-100 text-gray-800',
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
-
-  const formatTime = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        second: '2-digit'
-      });
-    } catch {
-      return 'Unknown';
-    }
-  };
 
   return (
-    <div className="h-full w-full bg-gray-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-sm text-gray-500">
-            {tasks.length} active task{tasks.length !== 1 ? 's' : ''}
-            {tasks.length > 3 && <span className="ml-1">(showing 3, scroll for more)</span>}
-          </p>
-        </div>
-        <button
-          onClick={fetchTasks}
-          disabled={loading}
-          className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Loading...' : 'Refresh'}
-        </button>
-      </div>
-
-      {/* Content - Fixed height to show ~3 tasks */}
+    <div className="h-full w-full bg-black flex flex-col">
       <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 120px)' }}>
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
@@ -153,48 +98,7 @@ export default function Tasks() {
             style={scrollbarStyles}
           >
             {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow min-h-[180px]"
-              >
-                {/* Task Header */}
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className={`px-2 py-0.5 text-xs font-semibold rounded ${getPriorityColor(
-                          task.priority
-                        )}`}
-                      >
-                        {task.priority}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded ${getCategoryColor(
-                          task.category
-                        )}`}
-                      >
-                        {task.category}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {task.aircraft_callsign || task.aircraft_icao24 || 'Unknown Aircraft'}
-                    </p>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {formatTime(task.created_at)}
-                  </span>
-                </div>
-
-                {/* Task Description */}
-                <p className="text-sm text-gray-700 mt-2">{task.description}</p>
-
-                {/* Aircraft Info */}
-                <div className="mt-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">
-                    ICAO24: <span className="font-mono">{task.aircraft_icao24}</span>
-                  </p>
-                </div>
-              </div>
+              <Card key={task.id} task={task} />
             ))}
           </div>
         )}

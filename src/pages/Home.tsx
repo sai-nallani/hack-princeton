@@ -11,15 +11,11 @@ export default function Home() {
         <Graphs />
       </div>
       
-      {/* Bottom row: Tasks (left 1/4), AirplaneTracker (middle 1/2), Chat (right 1/4) */}
-      <div className="col-span-1 row-span-1">
-        <Tasks />
-      </div>
-      <div className="col-span-2 row-span-1">
+      <div className="col-span-3 row-span-1">
         <AirplaneTracker />
       </div>
       <div className="col-span-1 row-span-1">
-        <Chat />
+        <Tasks />
       </div>
     </main>
   );
