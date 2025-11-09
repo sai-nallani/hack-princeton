@@ -249,13 +249,23 @@ Return your response as a JSON object with a "tasks" key containing an array of 
 - "category": string (from the categories above)
 - "summary": string (VERY brief 5-10 word summary for quick scanning, e.g., "Low altitude - verify MVA clearance" or "Possible Class B penetration without clearance")
 - "description": string (detailed FAA-compliant description with web research citations - include aircraft N-number or callsign, full technical details)
-- "pilot_message": string (concise ATC radio message to be spoken to pilot, using proper phraseology, e.g., "November 12345, Atlanta Center, low altitude alert, verify you are not below minimum vectoring altitude, advise intentions")
+- "pilot_message": string (ATC radio message using standardized FAA phraseology per FAA Order 7110.65. Format: "[Callsign], [Facility], [Message], [Instruction], [Frequency if applicable]". 
+  Example format: "November 1370 Echo, Atlanta Approach, radar contact, you appear to be in Class B airspace without clearance, verify altitude and intentions, contact Atlanta Approach on 125.7."
+  Requirements:
+  * Use phonetic alphabet for N-numbers: "November [number] [letter]" (e.g., "November 1370 Echo" for N1370E)
+  * For airline callsigns: use full airline name + flight number (e.g., "Delta 1457", "United 5432")
+  * Identify facility: "Atlanta Approach", "Atlanta Center", "Atlanta Departure", etc.
+  * Use standard phrases: "radar contact", "verify altitude", "advise intentions", "contact [facility] on [frequency]"
+  * Be concise but clear - one sentence when possible
+  * Include frequency when instructing pilot to contact another facility
+  * Use proper terminology: "Class B airspace", "minimum vectoring altitude", "traffic advisory", etc.)
 
 CRITICAL REQUIREMENTS:
 - ALWAYS search FAA/NWS sources: notams.aim.faa.gov, aviationweather.gov, tfr.faa.gov
 - Use proper US aviation terminology: "MSL" not "AMSL", "AGL" not "above ground", "statute miles" not "kilometers"
 - Reference actual NOTAMs, METARs, TFRs, or AIRMETs/SIGMETs in descriptions when found via search
 - Format callsigns properly: "United 5432" not "UAL5432", "N12345" not "n12345"
+- For pilot_message: MUST use standardized FAA phraseology per FAA Order 7110.65. Use phonetic alphabet for N-numbers, identify facility, use standard phrases like "radar contact", "verify altitude", "advise intentions"
 - Include recommended ATC phraseology: "Contact aircraft", "Issue traffic alert", "Advise pilot of weather"
 - Prioritize based on FAA safety risk: immediate safety-of-flight = HIGH, deviation from regs = MEDIUM, advisory = LOW
 - Only generate tasks for genuine regulatory violations or safety concerns per FAA standards

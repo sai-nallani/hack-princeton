@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface CardProps {
   task: {
     id: number;
@@ -10,7 +12,11 @@ interface CardProps {
     resolved: boolean;
     fingerprint?: string;
     last_seen?: string;
+    summary?: string;
+    pilot_message?: string;
+    audio_file?: string;
   };
+  onTaskResolved?: (taskId: number) => void;
 }
 
 interface ParsedData {
@@ -121,7 +127,8 @@ function parseDescription(description: string): ParsedData {
   return data;
 }
 
-export default function Card({ task }: CardProps) {
+export default function Card({ task, onTaskResolved }: CardProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
   const parsed = parseDescription(task.description);
 
   const getPriorityColor = (priority: string) => {
@@ -149,6 +156,73 @@ export default function Card({ task }: CardProps) {
     }
   };
 
+  const resolveTask = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/tasks/resolve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ task_id: task.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to resolve task');
+      }
+
+      if (onTaskResolved) {
+        onTaskResolved(task.id);
+      }
+    } catch (err) {
+      console.error('Error resolving task:', err);
+      alert(`Failed to resolve task: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    setIsProcessing(true);
+    
+    try {
+      if (task.audio_file) {
+        // Play audio first, then resolve
+        const audioUrl = `http://localhost:8000/api/tasks/audio/${task.audio_file}`;
+        const audio = new Audio(audioUrl);
+        
+        audio.onended = async () => {
+          console.log(`✓ Task ${task.id} audio playback completed`);
+          await resolveTask();
+        };
+
+        audio.onerror = () => {
+          console.error('Failed to play audio');
+          // Resolve anyway even if audio fails
+          resolveTask();
+        };
+
+        await audio.play();
+        console.log('🔊 Playing audio for task', task.id);
+      } else if (task.pilot_message) {
+        // If no audio file but we have a message, try to generate/play it
+        // For now, just resolve - could add TTS endpoint call here if needed
+        await resolveTask();
+      } else {
+        // No audio or message, just resolve
+        await resolveTask();
+      }
+    } catch (err) {
+      console.error('Error accepting task:', err);
+      alert(`Failed to play message: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setIsProcessing(true);
+    await resolveTask();
+  };
+
   return (
     <div
       className={`border-l-2 rounded-r p-2.5 bg-gray-900 text-gray-100 shadow-sm hover:shadow-md transition-all font-tech ${getPriorityColor(
@@ -159,7 +233,7 @@ export default function Card({ task }: CardProps) {
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-bold text-cyan-400">
-            {parsed.callsign || task.aircraft_callsign || task.aircraft_icao24}
+            {task.aircraft_icao24}
           </span>
           {parsed.type && (
             <span className="font-mono text-xs text-gray-500">
@@ -170,9 +244,9 @@ export default function Card({ task }: CardProps) {
             {task.category} • {task.priority}
           </span>
         </div>
-        <div className="text-xs font-mono text-gray-600">
+        {/* <div className="text-xs font-mono text-gray-600">
           {formatTime(task.created_at)}
-        </div>
+        </div> */}
       </div>
 
       {/* Inline Metrics */}
@@ -201,14 +275,14 @@ export default function Card({ task }: CardProps) {
             <span className="text-purple-300">{parsed.squawk}</span>
           </span>
         )}
-        {parsed.position.lat && parsed.position.lon && (
-          <span>
-            <span className="text-gray-500">POS:</span>{' '}
-            <span className="text-gray-300">
-              {parsed.position.lat}, {parsed.position.lon}
-            </span>
-          </span>
-        )}
+        {/* {parsed.position.lat && parsed.position.lon && ( */}
+        {/* <span>
+          //   <span className="text-gray-500">POS:</span>{' '}
+          //   <span className="text-gray-300">
+          //     {parsed.position.lat}, {parsed.position.lon}
+          //   </span>
+          // </span>
+        // )} */}
         {parsed.location && (
           <span className="text-gray-500">
             📍 {parsed.location}
@@ -216,30 +290,53 @@ export default function Card({ task }: CardProps) {
         )}
       </div>
 
-      {/* Alert/Issue - Inline */}
-      {(parsed.alert || parsed.issue) && (
-        <div className="mb-1 font-mono text-xs">
-          {parsed.alert && (
-            <span>
-              <span className="text-red-400">⚠</span>{' '}
-              <span className="text-red-300">{parsed.alert}</span>
-            </span>
+      {/* Alert/Issue - Always visible */}
+      <div className="mb-1 font-mono text-xs">
+        <span>
+          <span className="text-red-400">⚠</span>{' '}
+          {task.summary ? (
+            <span className="text-red-300">{task.summary}</span>
+          ) : (
+            <span className="text-gray-600">No alerts</span>
           )}
-          {parsed.issue && (
-            <span className="text-red-400/80">
-              {' '}• {parsed.issue}
-            </span>
-          )}
-        </div>
-      )}
+        </span>
+      </div>
 
-      {/* ATC Action - Inline */}
-      {parsed.atcAction && (
-        <div className="font-mono text-xs">
-          <span className="text-cyan-400">ATC:</span>{' '}
-          <span className="text-gray-300">{parsed.atcAction}</span>
-        </div>
-      )}
+      {/* ATC Action - Always visible */}
+      <div className="font-mono text-xs mb-2">
+        <span className="text-cyan-400">ATC:</span>{' '}
+        {task.pilot_message ? (
+          <span className="text-gray-300">{task.pilot_message}</span>
+        ) : (
+          <span className="text-gray-600">No action required</span>
+        )}
+      </div>
+
+      {/* Accept/Reject Buttons */}
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={handleAccept}
+          disabled={isProcessing}
+          className={`flex-1 px-3 py-1.5 text-xs font-mono rounded transition-colors ${
+            isProcessing
+              ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700 text-white'
+          }`}
+        >
+          {isProcessing && task.audio_file ? '🔊 Playing...' : '✓ Accept'}
+        </button>
+        <button
+          onClick={handleReject}
+          disabled={isProcessing}
+          className={`flex-1 px-3 py-1.5 text-xs font-mono rounded transition-colors ${
+            isProcessing
+              ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              : 'bg-red-600 hover:bg-red-700 text-white'
+          }`}
+        >
+          ✗ Reject
+        </button>
+      </div>
     </div>
   );
 }
