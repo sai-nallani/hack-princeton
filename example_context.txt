@@ -1,132 +1,132 @@
 AIRCRAFT DATA:
-Total aircraft: 39
+Total aircraft: 46
 
 Aircraft 1:
-  Hex/ICAO24: a107fb
-  Callsign: N166AC
-  Registration: N166AC
-  Type: BE76
-  Position: Lat 34.044862, Lon -85.064278
-  Altitude: 3000ft MSL
-  Groundspeed: 137.6kt
-  Vertical Rate: N/Aft/min
-  Heading: 120.11°
-  Squawk: 1200
+  Hex/ICAO24: a7851c
+  Callsign: DAL493
+  Registration: N584DN
+  Type: UNKNOWN
+  Position: Lat 33.816896, Lon -85.199947
+  Altitude: 18000ft MSL
+  Groundspeed: 392.4kt
+  Vertical Rate: 1600ft/min
+  Heading: 281.17°
+  Squawk: 2045
 
 Aircraft 2:
-  Hex/ICAO24: a079db
-  Callsign: N13LJ
-  Registration: N13LJ
-  Type: UNKNOWN
-  Position: Lat 33.115959, Lon -84.917758
-  Altitude: 8575ft MSL
-  Groundspeed: 156.5kt
-  Vertical Rate: 0ft/min
-  Heading: 332.62°
-  Squawk: 2316
+  Hex/ICAO24: ab0fc0
+  Callsign: N8112Q
+  Registration: N8112Q
+  Type: P28A
+  Position: Lat 33.772614, Lon -85.186531
+  Altitude: 6600ft MSL
+  Groundspeed: 120.2kt
+  Vertical Rate: N/Aft/min
+  Heading: 8.13°
+  Squawk: 2654
 
 Aircraft 3:
-  Hex/ICAO24: a51b58
-  Callsign: SWA400
-  Registration: N428WN
-  Type: B737
-  Position: Lat 33.302261, Lon -84.781158
-  Altitude: 12100ft MSL
-  Groundspeed: 365.2kt
-  Vertical Rate: -64ft/min
-  Heading: 40.67°
-  Squawk: 1013
+  Hex/ICAO24: a2c1bd
+  Callsign: AAY426
+  Registration: N277NV
+  Type: A320
+  Position: Lat 33.781469, Lon -85.164757
+  Altitude: 37000ft MSL
+  Groundspeed: 491.1kt
+  Vertical Rate: 64ft/min
+  Heading: 25.83°
+  Squawk: 2655
 
 Aircraft 4:
-  Hex/ICAO24: a1bc9f
-  Callsign: N2105X
-  Registration: N2105X
-  Type: C172
-  Position: Lat 33.292019, Lon -84.778804
-  Altitude: 2275ft MSL
-  Groundspeed: 116.0kt
-  Vertical Rate: -896ft/min
-  Heading: 125.88°
-  Squawk: 1200
+  Hex/ICAO24: a48a83
+  Callsign: DAL2778
+  Registration: N392DA
+  Type: B738
+  Position: Lat 34.002779, Lon -85.002251
+  Altitude: 14025ft MSL
+  Groundspeed: 365.8kt
+  Vertical Rate: -384ft/min
+  Heading: 138.99°
+  Squawk: 5652
 
 Aircraft 5:
-  Hex/ICAO24: a5237f
-  Callsign: DAL147
-  Registration: N430DX
-  Type: UNKNOWN
-  Position: Lat 33.575662, Lon -84.694862
-  Altitude: 8250ft MSL
-  Groundspeed: 267.9kt
-  Vertical Rate: 2240ft/min
-  Heading: 190.97°
-  Squawk: 3104
-
-Aircraft 6:
-  Hex/ICAO24: a475d8
-  Callsign: FFT2779
-  Registration: N387FR
-  Type: A20N
-  Position: Lat 33.966095, Lon -84.584656
-  Altitude: 16775ft MSL
-  Groundspeed: 362.1kt
-  Vertical Rate: 3648ft/min
-  Heading: 358.58°
-  Squawk: 1734
-
-Aircraft 7:
-  Hex/ICAO24: ac3110
-  Callsign: N885GT
-  Registration: N885GT
-  Type: C172
-  Position: Lat 34.01326, Lon -84.57522
-  Altitude: 1575ft MSL
-  Groundspeed: 88.1kt
-  Vertical Rate: 1152ft/min
-  Heading: 92.6°
+  Hex/ICAO24: a95d74
+  Callsign: N702RA
+  Registration: N702RA
+  Type: P28A
+  Position: Lat 33.903397, Lon -84.961087
+  Altitude: 2300ft MSL
+  Groundspeed: 103.8kt
+  Vertical Rate: 33ft/min
+  Heading: 117.55°
   Squawk: 1200
 
+Aircraft 6:
+  Hex/ICAO24: a15b05
+  Callsign: DAL759
+  Registration: N187DN
+  Type: B763
+  Position: Lat 33.424181, Lon -84.772526
+  Altitude: 12075ft MSL
+  Groundspeed: 354.7kt
+  Vertical Rate: 0ft/min
+  Heading: 27.0°
+  Squawk: 7126
+
+Aircraft 7:
+  Hex/ICAO24: a4478d
+  Callsign: 1195
+  Registration: N375NC
+  Type: A320
+  Position: Lat 33.691484, Lon -84.607258
+  Altitude: 12100ft MSL
+  Groundspeed: 301.5kt
+  Vertical Rate: -192ft/min
+  Heading: 27.67°
+  Squawk: 2766
+
 Aircraft 8:
-  Hex/ICAO24: aa01b5
-  Callsign: N744DD
-  Registration: N744DD
-  Type: PA46
-  Position: Lat 33.350922, Lon -84.562152
-  Altitude: 975ft MSL
-  Groundspeed: 77.8kt
-  Vertical Rate: -512ft/min
-  Heading: 307.16°
+  Hex/ICAO24: a0978f
+  Callsign: N1370E
+  Registration: N1370E
+  Type: C172
+  Position: Lat 34.011589, Lon -84.603849
+  Altitude: groundft MSL
+  Groundspeed: 0.0kt
+  Vertical Rate: N/Aft/min
+  Heading: N/A°
   Squawk: 1200
 
 Aircraft 9:
-  Hex/ICAO24: a24526
-  Callsign: UAL1761
-  Registration: N24510
+  Hex/ICAO24: a84200
+  Callsign: FFT4026
+  Registration: N631FR
   Type: A21N
-  Position: Lat 34.140289, Lon -84.551846
-  Altitude: 31000ft MSL
-  Groundspeed: 466.6kt
-  Vertical Rate: 0ft/min
-  Heading: 167.75°
-  Squawk: 3150
+  Position: Lat 33.634552, Lon -84.596632
+  Altitude: 6425ft MSL
+  Groundspeed: 261.0kt
+  Vertical Rate: 3072ft/min
+  Heading: 269.56°
+  Squawk: 3530
 
 Aircraft 10:
-  Hex/ICAO24: a4cacb
-  Callsign: N408EP
-  Registration: N408EP
-  Type: C172
-  Position: Lat 33.343048, Lon -84.55177
-  Altitude: 1400ft MSL
-  Groundspeed: 64.1kt
-  Vertical Rate: -576ft/min
-  Heading: 325.81°
-  Squawk: 1200
+  Hex/ICAO24: a4a0cd
+  Callsign: DAL1713
+  Registration: N398DA
+  Type: B738
+  Position: Lat 33.665834, Lon -84.560852
+  Altitude: 4625ft MSL
+  Groundspeed: 260.3kt
+  Vertical Rate: 3648ft/min
+  Heading: 282.65°
+  Squawk: 2540
 
 
 WEATHER DATA:
 Station: KATL
-Visibility: 10+sm
+Visibility: 10.0sm
 Ceiling: Noneft AGL
 Flight Category: None
-Wind: 0° at 0kt
+Wind: 260.0° at 3.0kt
 Temperature: 18.9°C
 Conditions: 

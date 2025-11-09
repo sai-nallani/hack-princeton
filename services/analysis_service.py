@@ -424,15 +424,43 @@ async def analyze_with_dedalus(planes: List[Dict], weather_data: Optional[Dict] 
             task["created_at"] = datetime.now(timezone.utc).isoformat()
             task["resolved"] = False
             
-            # Generate audio file for pilot message if available
+            # Mark that audio is not yet generated
+            task["audio_file"] = None
+        
+        # Generate audio ONLY for the first 3 HIGH priority tasks
+        # First, sort tasks by priority (HIGH first)
+        high_priority_tasks = [t for t in tasks if t.get('priority', '').upper() == 'HIGH']
+        
+        # Count how many high priority tasks already have audio from existing tasks
+        existing_tasks = load_tasks()
+        existing_high_with_audio = sum(
+            1 for t in existing_tasks 
+            if not t.get("resolved", False) 
+            and t.get('priority', '').upper() == 'HIGH' 
+            and t.get('audio_file') is not None
+        )
+        
+        # Calculate how many more audio files we can generate
+        audio_slots_available = max(0, 3 - existing_high_with_audio)
+        
+        print(f"🎵 Audio generation: {existing_high_with_audio} high priority tasks with audio, {audio_slots_available} slots available")
+        
+        # Generate audio for up to the available slots
+        audio_generated = 0
+        for task in high_priority_tasks:
+            if audio_generated >= audio_slots_available:
+                print(f"⏸️  Skipping audio for task {task['id']} - already have 3 high priority tasks with audio")
+                break
+            
             pilot_message = task.get('pilot_message')
             if pilot_message:
                 audio_filename = await generate_audio_for_task(task["id"], pilot_message)
-                task["audio_file"] = audio_filename
-            else:
-                task["audio_file"] = None
+                if audio_filename:
+                    task["audio_file"] = audio_filename
+                    audio_generated += 1
+                    print(f"✓ Generated audio {audio_generated}/{audio_slots_available} for HIGH priority task {task['id']}")
         
-        print(f"Dedalus AI generated {len(tasks)} tasks")
+        print(f"Dedalus AI generated {len(tasks)} tasks ({audio_generated} with audio)")
         return tasks
         
     except Exception as e:
@@ -496,6 +524,9 @@ async def run_analysis() -> List[Dict]:
             # Update description if it's more detailed
             if len(task.get("description", "")) > len(existing_tasks[idx].get("description", "")):
                 existing_tasks[idx]["description"] = task["description"]
+            # Preserve existing audio file if it exists, otherwise use new one
+            if not existing_tasks[idx].get("audio_file") and task.get("audio_file"):
+                existing_tasks[idx]["audio_file"] = task["audio_file"]
             updated_indices.add(idx)
         else:
             # New task - add it

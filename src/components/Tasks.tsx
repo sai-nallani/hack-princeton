@@ -82,8 +82,18 @@ export default function Tasks() {
       
       const data = await response.json();
       
-      // Sort by priority: HIGH → MEDIUM → LOW
+      // Sort by:
+      // 1. Tasks with audio_file first
+      // 2. Then by priority: HIGH → MEDIUM → LOW
       const sortedData = data.sort((a: Task, b: Task) => {
+        // First, sort by audio availability (tasks with audio come first)
+        const aHasAudio = a.audio_file ? 1 : 0;
+        const bHasAudio = b.audio_file ? 1 : 0;
+        if (bHasAudio !== aHasAudio) {
+          return bHasAudio - aHasAudio;  // Tasks with audio first
+        }
+        
+        // Then sort by priority
         return getPriorityRank(a.priority) - getPriorityRank(b.priority);
       });
       
