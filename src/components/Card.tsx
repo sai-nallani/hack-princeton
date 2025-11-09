@@ -131,7 +131,8 @@ export default function Card({ task, onTaskResolved }: CardProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const parsed = parseDescription(task.description);
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string | undefined) => {
+    if (!priority) return 'border-l-gray-500';
     switch (priority.toUpperCase()) {
       case 'HIGH':
         return 'border-l-red-500';
@@ -141,6 +142,74 @@ export default function Card({ task, onTaskResolved }: CardProps) {
         return 'border-l-blue-500';
       default:
         return 'border-l-gray-500';
+    }
+  };
+
+  const formatCallsign = (callsign: string): string => {
+    try {
+      if (!callsign || typeof callsign !== 'string') return 'N/A';
+      
+      // Map of spelled-out numbers to digits
+      const numberMap: Record<string, string> = {
+        'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+        'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+        'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+        'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+        'eighteen': '18', 'nineteen': '19', 'twenty': '20', 'thirty': '30',
+        'forty': '40', 'fifty': '50', 'sixty': '60', 'seventy': '70',
+        'eighty': '80', 'ninety': '90', 'hundred': '00'
+      };
+
+      const trimmed = callsign.trim();
+      if (!trimmed) return 'N/A';
+      
+      const words = trimmed.split(/\s+/);
+      const result: string[] = [];
+
+      for (const word of words) {
+        if (!word || typeof word !== 'string' || word.trim().length === 0) continue;
+        
+        const lowerWord = word.toLowerCase();
+        
+        // Check if it's a spelled-out number
+        if (numberMap[lowerWord]) {
+          result.push(numberMap[lowerWord]);
+        } 
+        // Check if it's already all digits
+        else if (/^\d+$/.test(word)) {
+          result.push(word);
+        }
+        // Check if it's a mixed alphanumeric string (like "DAL3119" or "AAL123")
+        else if (/[A-Za-z]/.test(word) && /\d/.test(word)) {
+          // Extract letters and numbers separately
+          const letterMatch = word.match(/[A-Za-z]+/);
+          const numberMatch = word.match(/\d+/);
+          
+          if (letterMatch && letterMatch[0] && letterMatch[0].length > 0) {
+            // Take first letter of the letter group
+            const firstLetter = letterMatch[0].charAt(0);
+            if (firstLetter && typeof firstLetter === 'string') {
+              result.push(firstLetter.toUpperCase());
+            }
+          }
+          if (numberMatch && numberMatch[0]) {
+            result.push(numberMatch[0]);
+          }
+        }
+        // Otherwise, take the first letter (uppercase)
+        else if (word.length > 0) {
+          const firstLetter = word.charAt(0);
+          if (firstLetter && typeof firstLetter === 'string') {
+            result.push(firstLetter.toUpperCase());
+          }
+        }
+      }
+
+      const formatted = result.join('');
+      return formatted || 'N/A';
+    } catch (error) {
+      console.error('Error formatting callsign:', error, callsign);
+      return 'N/A';
     }
   };
 
@@ -229,12 +298,17 @@ export default function Card({ task, onTaskResolved }: CardProps) {
         task.priority
       )}`}
     >
+
       {/* Compact Header Row */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-bold text-cyan-400">
-            {task.aircraft_icao24}
-          </span>
+          <div className="mb-2">
+            <span className="font-mono text-lg font-bold text-cyan-400">
+              {formatCallsign(task.aircraft_callsign || parsed.callsign || '')}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           {parsed.type && (
             <span className="font-mono text-xs text-gray-500">
               {parsed.type}

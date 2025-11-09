@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, Bar, Line } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, Cell } from 'recharts';
 
 interface Airplane {
   hex?: string;
@@ -23,7 +23,7 @@ interface ForecastPeriod {
   time: string;
   temperature?: number;
   wind_speed?: number;
-  wind_direction?: number | string; // Can be degrees (number) or cardinal direction (string)
+  wind_direction?: number | string;
   visibility?: number;
   ceiling?: number;
   flight_category?: string;
@@ -36,6 +36,7 @@ interface WeatherData {
   station?: string;
   observation_time?: string;
   temperature?: number;
+  dewpoint?: number;
   wind_speed?: number;
   wind_direction?: number;
   visibility?: number;
@@ -48,18 +49,15 @@ interface WeatherData {
 interface TimelineDataPoint {
   time: string;
   timestamp: number;
-  // METAR actuals
   metarWindSpeed?: number;
   metarVisibility?: number;
+  metarTemperature?: number;
   metarFlightCategory?: string;
-  // TAF forecast
   tafWindSpeed?: number;
   tafVisibility?: number;
+  tafTemperature?: number;
   tafFlightCategory?: string;
-  // Combined values for color bands (prefer METAR for past, TAF for future)
-  windSpeed: number;
-  visibility: number;
-  flightCategory?: string; // VFR, MVFR, IFR, LIFR
+  flightCategory?: string; // Combined: METAR for past/current, TAF for future
 }
 
 export default function Graphs() {
@@ -81,8 +79,6 @@ export default function Graphs() {
         const planes: Airplane[] = await response.json();
         const count = planes ? planes.length : 0;
         
-        // Only update timestamp when count changes (indicating new tracking data)
-        // or on first load (when prevCountRef.current is null)
         if (prevCountRef.current === null || prevCountRef.current !== count) {
           setLastUpdate(new Date());
         }
@@ -96,16 +92,12 @@ export default function Graphs() {
       }
     };
 
-    // Fetch immediately
     fetchPlaneCount();
-
-    // Poll every 1 second to match backend polling frequency
     const interval = setInterval(fetchPlaneCount, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Helper function to parse TAF timestamp (format: "YYYY-MM-DDTHH:MM:SSZ")
+  // Helper function to parse TAF timestamp
   const parseTAFTime = (timeStr: string): Date | null => {
     if (!timeStr) return null;
     try {
@@ -128,7 +120,6 @@ export default function Graphs() {
       }
     }
     
-    // If no exact match, find the closest forecast period
     let closestPeriod: ForecastPeriod | null = null;
     let minDiff = Infinity;
     
@@ -146,98 +137,50 @@ export default function Graphs() {
     return closestPeriod;
   };
 
-
   // Process timeline data: past 1 hour to next 24 hours
   useEffect(() => {
     const points: TimelineDataPoint[] = [];
     const now = new Date();
     const currentTime = now.getTime();
     
-    // Generate points from 1 hour ago to 24 hours in the future
-    // Use hourly intervals
-    const startTime = currentTime - (1 * 60 * 60 * 1000); // 1 hour ago
-    const endTime = currentTime + (24 * 60 * 60 * 1000); // 24 hours ahead
-    const intervalMs = 60 * 60 * 1000; // 1 hour intervals
+    const startTime = currentTime - (1 * 60 * 60 * 1000);
+    const endTime = currentTime + (24 * 60 * 60 * 1000);
+    const intervalMs = 60 * 60 * 1000;
     
     for (let time = startTime; time <= endTime; time += intervalMs) {
       const date = new Date(time);
-      const isPast = time < currentTime;
-      const isCurrent = Math.abs(time - currentTime) < 30 * 60 * 1000; // Within 30 minutes of now
+      const isCurrent = Math.abs(time - currentTime) < 30 * 60 * 1000;
       
-      // METAR actuals (for past/current)
       let metarWindSpeed: number | undefined = undefined;
       let metarVisibility: number | undefined = undefined;
+      let metarTemperature: number | undefined = undefined;
       let metarFlightCategory: string | undefined = undefined;
-      
-      // TAF forecast (for all times if available)
       let tafWindSpeed: number | undefined = undefined;
       let tafVisibility: number | undefined = undefined;
+      let tafTemperature: number | undefined = undefined;
       let tafFlightCategory: string | undefined = undefined;
-      
-      // Combined values (for color bands)
-      let windSpeed = 0;
-      let visibility = 0;
       let flightCategory: string | undefined = undefined;
       
-      // Get METAR data ONLY for current time point
       if (isCurrent && metarData) {
         metarWindSpeed = metarData.wind_speed ?? 0;
         metarVisibility = metarData.visibility ?? 0;
+        metarTemperature = metarData.temperature;
         metarFlightCategory = metarData.flight_category;
-        // Use METAR for combined values at current time
-        windSpeed = metarWindSpeed;
-        visibility = metarVisibility;
-        flightCategory = metarFlightCategory;
+        flightCategory = metarData.flight_category;
       }
       
-      // Get TAF forecast for all times (past and future) - used for line chart
       if (weatherData && weatherData.forecast && weatherData.forecast.length > 0) {
         const forecast = findForecastForTime(weatherData.forecast, date);
         if (forecast) {
           tafWindSpeed = forecast.wind_speed ?? 0;
           tafVisibility = forecast.visibility ?? 0;
+          tafTemperature = forecast.temperature;
           tafFlightCategory = forecast.flight_category;
-          // Use TAF for combined values in future (for color bands)
-          if (!isPast && !isCurrent) {
-            windSpeed = tafWindSpeed;
-            visibility = tafVisibility;
-            flightCategory = tafFlightCategory;
-          } else if (isCurrent) {
-            // At current time, use METAR if available, otherwise TAF
-            if (!metarData) {
-              windSpeed = tafWindSpeed;
-              visibility = tafVisibility;
-              flightCategory = tafFlightCategory;
-            }
-          }
-        } else {
-          // If no exact forecast found, try to use the closest one
-          const lastForecast = weatherData.forecast[weatherData.forecast.length - 1];
-          if (lastForecast) {
-            tafWindSpeed = lastForecast.wind_speed ?? 0;
-            tafVisibility = lastForecast.visibility ?? 0;
-            tafFlightCategory = lastForecast.flight_category;
-            if (!isPast && !isCurrent) {
-              windSpeed = tafWindSpeed;
-              visibility = tafVisibility;
-              flightCategory = tafFlightCategory;
-            } else if (isCurrent && !metarData) {
-              windSpeed = tafWindSpeed;
-              visibility = tafVisibility;
-              flightCategory = tafFlightCategory;
-            }
+          // Use TAF category for future periods, or if no METAR for current
+          if (!isCurrent || !metarData) {
+            flightCategory = forecast.flight_category;
           }
         }
-      }
-      
-      // Fallback: if no TAF and in future, use current METAR for forecast
-      if ((!isPast && !isCurrent) && !tafWindSpeed && metarData) {
-        tafWindSpeed = metarData.wind_speed ?? 0;
-        tafVisibility = metarData.visibility ?? 0;
-        tafFlightCategory = metarData.flight_category;
-        windSpeed = tafWindSpeed;
-        visibility = tafVisibility;
-        flightCategory = tafFlightCategory;
       }
       
       const timeLabel = date.toLocaleTimeString('en-US', {
@@ -251,12 +194,12 @@ export default function Graphs() {
         timestamp: time,
         metarWindSpeed,
         metarVisibility,
+        metarTemperature,
         metarFlightCategory,
         tafWindSpeed,
         tafVisibility,
+        tafTemperature,
         tafFlightCategory,
-        windSpeed,
-        visibility,
         flightCategory,
       });
     }
@@ -264,18 +207,14 @@ export default function Graphs() {
     setTimelineData(points);
   }, [metarData, weatherData]);
 
-  // Fetch METAR data (real-time observations) - used for "Now"
+  // Fetch METAR data
   useEffect(() => {
     const fetchMETAR = async () => {
       try {
         const response = await fetch('http://localhost:8000/api/weather/metar/KATL');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data: WeatherData = await response.json();
-        
         if (data && data.station) {
           setMetarData(data);
         } else {
@@ -287,42 +226,26 @@ export default function Graphs() {
       }
     };
 
-    // Fetch immediately
     fetchMETAR();
-
-    // Poll every 10 minutes for METAR updates
     const interval = setInterval(fetchMETAR, 600000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch TAF data (forecasts) - used for +1 hour and +6 hours
+  // Fetch TAF data
   useEffect(() => {
     const fetchTAF = async () => {
       try {
-        // Using KATL (Atlanta Hartsfield-Jackson) as default airport
         const response = await fetch('http://localhost:8000/api/weather/taf/KATL');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data: WeatherData = await response.json();
-        
-        console.log('TAF data received:', data);
-        
         if (data && data.forecast && data.forecast.length > 0) {
           setWeatherData(data);
-          console.log(`Loaded ${data.forecast.length} forecast periods`);
         } else if (data && data.station) {
-          // Even if no forecast, keep the data object so we can show station info
           setWeatherData(data);
-          console.log('TAF data received but no forecast periods');
         } else {
           setWeatherData(null);
-          console.log('No TAF data available');
         }
-        
         setWeatherLoading(false);
       } catch (error) {
         console.error('Error fetching TAF:', error);
@@ -331,12 +254,8 @@ export default function Graphs() {
       }
     };
 
-    // Fetch immediately
     fetchTAF();
-
-    // Poll every 10 minutes for TAF updates
     const interval = setInterval(fetchTAF, 600000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -349,39 +268,6 @@ export default function Graphs() {
     });
   };
 
-  // Helper function to convert wind direction (degrees or string) to cardinal direction
-  const getCardinalDirection = (direction: number | string | undefined): string => {
-    if (direction === undefined || direction === null) return 'N';
-    
-    // If it's already a string direction, validate and return it
-    if (typeof direction === 'string') {
-      const upper = direction.toUpperCase().trim();
-      const validDirections = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-      if (validDirections.includes(upper)) {
-        return upper;
-      }
-      // Try to parse as number string
-      const num = parseFloat(upper);
-      if (!isNaN(num)) {
-        direction = num;
-      } else {
-        return 'N'; // Default if can't parse
-      }
-    }
-    
-    // Convert numeric degrees to cardinal direction
-    if (typeof direction === 'number') {
-      // Normalize to 0-360
-      const normalized = ((direction % 360) + 360) % 360;
-      // Convert to cardinal/intercardinal (8 directions)
-      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-      const index = Math.round(normalized / 45) % 8;
-      return directions[index];
-    }
-    
-    return 'N';
-  };
-
   // Get the next forecast period from TAF
   const getNextForecast = (): ForecastPeriod | null => {
     if (!weatherData || !weatherData.forecast || weatherData.forecast.length === 0) {
@@ -390,130 +276,40 @@ export default function Graphs() {
     
     const now = new Date();
     
-    // First, try to find a currently active forecast (now is between valid_from and valid_to)
     for (const period of weatherData.forecast) {
       const validFrom = parseTAFTime(period.valid_from || '');
       const validTo = parseTAFTime(period.valid_to || '');
       
       if (validFrom) {
-        // Check if now is within this period's validity
-        // If validTo is missing, assume the period is still valid if validFrom is in the past
         const isActive = validTo 
           ? (now >= validFrom && now <= validTo)
           : (now >= validFrom);
         
-        if (isActive) {
-          // Only return if it has wind data
-          if (period.wind_direction !== undefined && period.wind_speed !== undefined) {
+        if (isActive && period.wind_direction !== undefined && period.wind_speed !== undefined) {
             return period;
-          }
         }
       }
     }
     
-    // If no active forecast, find the first forecast period that starts in the future
     for (const period of weatherData.forecast) {
       const validFrom = parseTAFTime(period.valid_from || '');
       if (validFrom && validFrom > now) {
-        // Only return if it has wind data
         if (period.wind_direction !== undefined && period.wind_speed !== undefined) {
           return period;
         }
       }
     }
     
-    // If no future forecast with wind data, try to find any forecast with wind data
-    for (const period of weatherData.forecast) {
-      if (period.wind_direction !== undefined && period.wind_speed !== undefined) {
-        return period;
-      }
-    }
-    
-    // Last resort: return the last forecast period even without wind data
     return weatherData.forecast[weatherData.forecast.length - 1] || null;
-  };
-
-  // Prepare radar chart data from wind direction and speed (current + forecast)
-  const getRadarChartData = () => {
-    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-    const baseData = directions.map(dir => ({ 
-      direction: dir, 
-      currentWindSpeed: 0,
-      forecastWindSpeed: 0
-    }));
-    
-    // Get current wind data from METAR
-    if (metarData && metarData.wind_direction !== undefined && metarData.wind_speed !== undefined) {
-      const windDir = metarData.wind_direction;
-      const windSpeed = metarData.wind_speed || 0;
-      
-      // Wind direction indicates where wind is coming FROM
-      // Convert to the closest cardinal/intercardinal direction
-      const cardinalDir = getCardinalDirection(windDir);
-      
-      // Find the index of the cardinal direction
-      const dirIndex = directions.indexOf(cardinalDir);
-      if (dirIndex !== -1 && windSpeed > 0) {
-        baseData[dirIndex].currentWindSpeed = windSpeed;
-      }
-    }
-    
-    // Get forecast wind data from TAF
-    const nextForecast = getNextForecast();
-    if (nextForecast) {
-      // Check if forecast has wind data (wind_direction can be null for variable winds, but wind_speed should exist)
-      const forecastWindSpeed = nextForecast.wind_speed ?? 0;
-      const forecastWindDir = nextForecast.wind_direction;
-      
-      // Only display forecast if we have wind speed > 0 and a valid direction
-      if (forecastWindSpeed > 0 && forecastWindDir !== undefined && forecastWindDir !== null) {
-        // Convert to cardinal direction (handles both numbers and strings)
-        const forecastCardinalDir = getCardinalDirection(forecastWindDir);
-        const forecastDirIndex = directions.indexOf(forecastCardinalDir);
-        
-        if (forecastDirIndex !== -1) {
-          baseData[forecastDirIndex].forecastWindSpeed = forecastWindSpeed;
-        } else {
-          // Debug: log if direction conversion failed
-          console.warn('Forecast wind direction not found in directions array:', {
-            originalDirection: forecastWindDir,
-            convertedCardinal: forecastCardinalDir,
-            availableDirections: directions,
-            forecastData: nextForecast
-          });
-        }
-      }
-    }
-    
-    return baseData;
-  };
-
-  // Calculate max wind speed for radar chart domain (considering both current and forecast)
-  const getMaxWindSpeed = () => {
-    let maxSpeed = 0;
-    
-    if (metarData && metarData.wind_speed !== undefined) {
-      maxSpeed = Math.max(maxSpeed, metarData.wind_speed || 0);
-    }
-    
-    const nextForecast = getNextForecast();
-    if (nextForecast && nextForecast.wind_speed !== undefined) {
-      maxSpeed = Math.max(maxSpeed, nextForecast.wind_speed || 0);
-    }
-    
-    // Round up to nearest 10, with minimum of 20
-    return Math.max(20, Math.ceil(maxSpeed / 10) * 10);
   };
 
   // Get current flight category and future changes
   const getFlightCategoryStatus = () => {
     const now = new Date();
-    // Try to get current category from METAR first, then from currently active TAF period
     let currentCategory = metarData?.flight_category || null;
     
-    // If no METAR category, try to get it from currently active TAF forecast period
     if (!currentCategory && weatherData && weatherData.forecast) {
-      for (const period of weatherData.forecast) {
+    for (const period of weatherData.forecast) {
         const validFrom = parseTAFTime(period.valid_from || '');
         const validTo = parseTAFTime(period.valid_to || '');
         
@@ -526,40 +322,29 @@ export default function Graphs() {
       }
     }
     
-    const futureChanges: Array<{ category: string; time: Date; validTo?: Date }> = [];
+    const futureChanges: Array<{ category: string; time: Date }> = [];
     
-    if (!weatherData || !weatherData.forecast || weatherData.forecast.length === 0) {
-      return { current: currentCategory, changes: [] };
-    }
-    
-    // Get all future forecast periods sorted by time
-    const futurePeriods = weatherData.forecast
-      .map(period => ({
-        period,
-        validFrom: parseTAFTime(period.valid_from || ''),
-        validTo: parseTAFTime(period.valid_to || '')
-      }))
-      .filter(item => item.validFrom && item.validFrom > now)
-      .sort((a, b) => a.validFrom!.getTime() - b.validFrom!.getTime());
-    
-    // Track the last category we've seen to detect changes
-    // Start with current category, then track through future periods
-    let lastCategory = currentCategory;
-    
-    for (const { period, validFrom, validTo } of futurePeriods) {
-      const periodCategory = period.flight_category;
+    if (weatherData && weatherData.forecast) {
+      const futurePeriods = weatherData.forecast
+        .map(period => ({
+          period,
+          validFrom: parseTAFTime(period.valid_from || '')
+        }))
+        .filter(item => item.validFrom && item.validFrom > now)
+        .sort((a, b) => a.validFrom!.getTime() - b.validFrom!.getTime());
       
-      // If this period has a different category than the last one we saw, it's a change
-      if (periodCategory && periodCategory !== lastCategory) {
-        futureChanges.push({
-          category: periodCategory,
-          time: validFrom!,
-          validTo: validTo || undefined
-        });
-        lastCategory = periodCategory;
-      } else if (periodCategory) {
-        // Update lastCategory even if it's the same, so we track the sequence correctly
-        lastCategory = periodCategory;
+      let lastCategory = currentCategory;
+      for (const { period, validFrom } of futurePeriods) {
+        const periodCategory = period.flight_category;
+        if (periodCategory && periodCategory !== lastCategory) {
+          futureChanges.push({
+            category: periodCategory,
+            time: validFrom!
+          });
+          lastCategory = periodCategory;
+        } else if (periodCategory) {
+          lastCategory = periodCategory;
+        }
       }
     }
     
@@ -570,433 +355,479 @@ export default function Graphs() {
   const getFlightCategoryDisplayColor = (category?: string | null): string => {
     if (!category) return '#9ca3af';
     const upper = category.toUpperCase();
-    if (upper === 'VFR') return '#22c55e'; // Green
-    if (upper === 'MVFR') return '#eab308'; // Yellow
-    if (upper === 'IFR' || upper === 'LIFR') return '#ef4444'; // Red
-    return '#9ca3af'; // Gray
+    if (upper === 'VFR') return '#86efac';
+    if (upper === 'MVFR') return '#fde047';
+    if (upper === 'IFR' || upper === 'LIFR') return '#f87171';
+    return '#9ca3af';
+  };
+
+  // Helper to format wind direction
+  const formatWindDirection = (dir: number | string | undefined): string => {
+    if (dir === undefined || dir === null) return 'Variable';
+    if (typeof dir === 'string') {
+      const upper = dir.toUpperCase().trim();
+      if (['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'].includes(upper)) {
+        return upper;
+      }
+      const num = parseFloat(dir);
+      if (!isNaN(num)) {
+        return `${Math.round(num)}°`;
+      }
+      return dir;
+    }
+    return `${Math.round(dir)}°`;
+  };
+
+  // Helper function to convert wind direction to cardinal direction
+  const getCardinalDirection = (direction: number | string | undefined): string => {
+    if (direction === undefined || direction === null) return 'N';
+    
+    if (typeof direction === 'string') {
+      const upper = direction.toUpperCase().trim();
+      const validDirections = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      if (validDirections.includes(upper)) {
+        return upper;
+      }
+      const num = parseFloat(upper);
+      if (!isNaN(num)) {
+        direction = num;
+      } else {
+        return 'N';
+      }
+    }
+    
+    if (typeof direction === 'number') {
+      const normalized = ((direction % 360) + 360) % 360;
+      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      const index = Math.round(normalized / 45) % 8;
+      return directions[index];
+    }
+    
+    return 'N';
+  };
+
+  // Prepare radar chart data from wind direction and speed
+  const getRadarChartData = () => {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const baseData = directions.map(dir => ({ 
+      direction: dir, 
+      currentWindSpeed: 0,
+      forecastWindSpeed: 0
+    }));
+    
+    // Get current wind data from METAR
+    if (metarData && metarData.wind_direction !== undefined && metarData.wind_speed !== undefined) {
+      const windDir = metarData.wind_direction;
+      const windSpeed = metarData.wind_speed || 0;
+      const cardinalDir = getCardinalDirection(windDir);
+      const dirIndex = directions.indexOf(cardinalDir);
+      if (dirIndex !== -1 && windSpeed > 0) {
+        baseData[dirIndex].currentWindSpeed = windSpeed;
+      }
+    }
+    
+    // Get forecast wind data from TAF
+    if (nextForecast) {
+      const forecastWindSpeed = nextForecast.wind_speed ?? 0;
+      const forecastWindDir = nextForecast.wind_direction;
+      
+      if (forecastWindSpeed > 0 && forecastWindDir !== undefined && forecastWindDir !== null) {
+        const forecastCardinalDir = getCardinalDirection(forecastWindDir);
+        const forecastDirIndex = directions.indexOf(forecastCardinalDir);
+        if (forecastDirIndex !== -1) {
+          baseData[forecastDirIndex].forecastWindSpeed = forecastWindSpeed;
+        }
+      }
+    }
+    
+    return baseData;
+  };
+
+  // Calculate max wind speed for radar chart domain
+  const getMaxWindSpeed = () => {
+    let maxSpeed = 0;
+    
+    if (metarData && metarData.wind_speed !== undefined) {
+      maxSpeed = Math.max(maxSpeed, metarData.wind_speed || 0);
+    }
+    
+    if (nextForecast && nextForecast.wind_speed !== undefined) {
+      maxSpeed = Math.max(maxSpeed, nextForecast.wind_speed || 0);
+    }
+    
+    return Math.max(10, Math.ceil(maxSpeed / 5) * 5);
+  };
+
+  // Get wind speed status color
+  const getWindSpeedColor = (speed: number | undefined): string => {
+    if (speed === undefined) return '#9ca3af';
+    if (speed < 10) return '#86efac'; // Green
+    if (speed <= 20) return '#fde047'; // Yellow
+    return '#f87171'; // Red
+  };
+
+  // Get visibility status color
+  const getVisibilityColor = (vis: number | undefined): string => {
+    if (vis === undefined) return '#9ca3af';
+    if (vis >= 10) return '#86efac'; // Green
+    if (vis >= 3) return '#fde047'; // Yellow
+    return '#f87171'; // Red
+  };
+
+  // Get flight category color for timeline bands
+  const getFlightCategoryColor = (category?: string | null): string => {
+    if (!category) return '#6b7280'; // gray-500
+    const upper = category.toUpperCase();
+    if (upper === 'VFR') return '#86efac'; // green-300
+    if (upper === 'MVFR') return '#fde047'; // yellow-300
+    if (upper === 'IFR' || upper === 'LIFR') return '#f87171'; // red-400
+    return '#6b7280';
+  };
+
+  // Get flight category numeric value for chart (for area height)
+  const getFlightCategoryValue = (category?: string | null): number => {
+    if (!category) return 0;
+    const upper = category.toUpperCase();
+    if (upper === 'VFR') return 3;
+    if (upper === 'MVFR') return 2;
+    if (upper === 'IFR' || upper === 'LIFR') return 1;
+    return 0;
   };
 
   const flightCategoryStatus = getFlightCategoryStatus();
+  const nextForecast = getNextForecast();
+
+  // Format change time
+  const formatChangeTime = (date: Date) => {
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (diffHours > 0) {
+      return `in ${diffHours}h ${diffMinutes}m`;
+    } else if (diffMinutes > 0) {
+      return `in ${diffMinutes}m`;
+    } else {
+      return 'soon';
+    }
+  };
 
   return (
-    <div className="h-full w-full flex flex-col gap-4 p-4 relative bg-black">
-
-      {/* Top Row: All Weather Components */}
-      <div className="flex gap-4 w-full">
-        {/* Wind Speed Chart Box */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '22%' }}>
-          <div className="text-xs font-semibold text-gray-200 mb-1">
-            Wind Speed (kt) - {metarData?.station || weatherData?.station || 'KATL'}
-          </div>
-        
-          {weatherLoading ? (
-            <div className="text-gray-400 text-xs">Loading weather data...</div>
-          ) : timelineData.length > 0 ? (
-            <div className="h-32 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={timelineData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="time" 
-                    tick={{ fontSize: 8, fill: '#9ca3af' }}
-                    stroke="#6b7280"
-                    interval="preserveStartEnd"
-                    angle={-45}
-                    textAnchor="end"
-                    height={50}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 8, fill: '#9ca3af' }}
-                    stroke="#6b7280"
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#f3f4f6',
-                      fontSize: '11px'
-                    }}
-                    labelStyle={{ color: '#d1d5db', fontSize: '11px' }}
-                    formatter={(value: any, name: string) => {
-                      if (name === 'metarWindSpeed' || name === 'tafWindSpeed') return [`${value} kt`, name.includes('metar') ? 'METAR Wind' : 'TAF Wind'];
-                      return [value, name];
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '9px', color: '#d1d5db' }} />
-                  
-                  {/* Current time marker */}
-                  {(() => {
-                    const now = new Date();
-                    const currentTime = now.getTime();
-                    const currentPoint = timelineData.find(p => Math.abs(p.timestamp - currentTime) < 30 * 60 * 1000);
-                    if (currentPoint) {
-                      return (
-                        <ReferenceLine
-                          x={currentPoint.time}
-                          stroke="#fbbf24"
-                          strokeWidth={2}
-                          strokeDasharray="5 5"
-                          label={{ value: "Now", position: "top", fill: "#fbbf24", fontSize: 9 }}
-                        />
-                      );
-                    }
-                    return null;
-                  })()}
-                  
-                  {/* METAR Wind Speed Bar (Current value only) */}
-                  <Bar 
-                    dataKey="metarWindSpeed" 
-                    fill="#82ca9d" 
-                    name="METAR Wind (kt)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  
-                  {/* TAF Wind Speed Line (Forecast) */}
-                  <Line 
-                    type="monotone" 
-                    dataKey="tafWindSpeed" 
-                    stroke="#82ca9d" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="TAF Wind (kt)"
-                    dot={{ r: 2 }}
-                    activeDot={{ r: 4 }}
-                    connectNulls={false}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+    <div className="h-auto w-full flex items-center p-2 relative">
+      {/* Black backdrop for better contrast */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.25)',
+        }}
+      />
+      {/* Single Row: Sleek Minimalist Dashboard */}
+      <div className="flex w-full items-stretch gap-0 relative z-10">
+        {/* 1. Aircraft Count - Compact */}
+        <div className="flex-shrink-0 w-24 p-3 flex flex-col justify-center items-center border-r border-white/20">
+          <div className="text-[10px] font-mono text-white uppercase mb-1">Aircraft</div>
+          <div className="flex items-center gap-2">
+            <div className="text-2xl font-mono font-bold text-white">
+              {isLoading ? '...' : planeCount}
             </div>
-          ) : (
-            <div className="text-gray-400 text-xs">
-              No weather data available
-            </div>
-          )}
-        </div>
-
-        {/* Visibility Chart Box */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '22%' }}>
-          <div className="text-xs font-semibold text-gray-200 mb-1">
-            Visibility (mi) - {metarData?.station || weatherData?.station || 'KATL'}
-          </div>
-          
-          {weatherLoading ? (
-            <div className="text-gray-400 text-xs">Loading weather data...</div>
-          ) : timelineData.length > 0 ? (
-            <div className="h-32 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={timelineData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="time" 
-                    tick={{ fontSize: 8, fill: '#9ca3af' }}
-                    stroke="#6b7280"
-                    interval="preserveStartEnd"
-                    angle={-45}
-                    textAnchor="end"
-                    height={50}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 8, fill: '#9ca3af' }}
-                    stroke="#6b7280"
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#f3f4f6',
-                      fontSize: '11px'
-                    }}
-                    labelStyle={{ color: '#d1d5db', fontSize: '11px' }}
-                    formatter={(value: any, name: string) => {
-                      if (name === 'metarVisibility' || name === 'tafVisibility') return [`${value} mi`, name.includes('metar') ? 'METAR Visibility' : 'TAF Visibility'];
-                      return [value, name];
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '9px', color: '#d1d5db' }} />
-                  
-                  {/* Current time marker */}
-                  {(() => {
-                    const now = new Date();
-                    const currentTime = now.getTime();
-                    const currentPoint = timelineData.find(p => Math.abs(p.timestamp - currentTime) < 30 * 60 * 1000);
-                    if (currentPoint) {
-                      return (
-                        <ReferenceLine
-                          x={currentPoint.time}
-                          stroke="#fbbf24"
-                          strokeWidth={2}
-                          strokeDasharray="5 5"
-                          label={{ value: "Now", position: "top", fill: "#fbbf24", fontSize: 9 }}
-                        />
-                      );
-                    }
-                    return null;
-                  })()}
-                  
-                  {/* METAR Visibility Bar (Current value only) */}
-                  <Bar 
-                    dataKey="metarVisibility" 
-                    fill="#8884d8" 
-                    name="METAR Visibility (mi)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  
-                  {/* TAF Visibility Line (Forecast) */}
-                  <Line 
-                    type="monotone" 
-                    dataKey="tafVisibility" 
-                    stroke="#8884d8" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="TAF Visibility (mi)"
-                    dot={{ r: 2 }}
-                    activeDot={{ r: 4 }}
-                    connectNulls={false}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="text-gray-400 text-xs">
-              No weather data available
-            </div>
-          )}
-        </div>
-
-          {/* Airplane Count Box */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-4 flex flex-col gap-2">
-          <div className="text-2xl font-bold text-gray-100">
-            {isLoading ? '...' : planeCount}
-          </div>
-          <div className="text-xs text-gray-400">
-            # of airplanes
-          </div>
-          <div className="text-xs text-gray-400">
-            Last updated: {formatTime(lastUpdate)}
+            <div 
+              className={`w-1.5 h-1.5 rounded-full ${
+                planeCount > 0 ? 'bg-green-500' : planeCount === 0 ? 'bg-red-500' : 'bg-yellow-500'
+              }`}
+              style={{
+                boxShadow: planeCount > 0 
+                  ? '0 0 6px rgba(34, 197, 94, 0.6)' 
+                  : planeCount === 0 
+                    ? '0 0 6px rgba(239, 68, 68, 0.6)' 
+                    : '0 0 6px rgba(234, 179, 8, 0.6)'
+              }}
+            />
           </div>
         </div>
 
-        {/* Flight Category Status Box */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-4 flex flex-col gap-2" style={{ width: '18%', minWidth: '180px' }}>
-        <div className="text-sm font-semibold text-gray-200 mb-2">
-          Flight Category
+        {/* 2. Flight Category (VFR/MVFR/IFR) - Compact */}
+        <div className="flex-shrink-0 w-32 p-3 flex flex-col justify-center border-r border-white/20">
+          <div className="flex flex-col gap-2">
+            {/* VFR Light */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${
+                  flightCategoryStatus.current === 'VFR' ? 'animate-pulse' : 'opacity-30'
+                }`}
+                style={{
+                  backgroundColor: flightCategoryStatus.current === 'VFR' ? '#86efac' : '#4a5568',
+                  borderColor: flightCategoryStatus.current === 'VFR' ? '#86efac' : '#6b7280',
+                  boxShadow: flightCategoryStatus.current === 'VFR' 
+                    ? '0 0 10px rgba(134, 239, 172, 0.6)' : 'none',
+                }}
+              />
+              <span className="text-[10px] font-mono text-white">VFR</span>
+            </div>
+            {/* MVFR Light */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${
+                  flightCategoryStatus.current === 'MVFR' ? 'animate-pulse' : 'opacity-30'
+                }`}
+                style={{
+                  backgroundColor: flightCategoryStatus.current === 'MVFR' ? '#fde047' : '#4a5568',
+                  borderColor: flightCategoryStatus.current === 'MVFR' ? '#fde047' : '#6b7280',
+                  boxShadow: flightCategoryStatus.current === 'MVFR' 
+                    ? '0 0 10px rgba(253, 224, 71, 0.6)' : 'none',
+                }}
+              />
+              <span className="text-[10px] font-mono text-white">MVFR</span>
+            </div>
+            {/* IFR Light */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${
+                  (flightCategoryStatus.current === 'IFR' || flightCategoryStatus.current === 'LIFR') 
+                    ? 'animate-pulse' : 'opacity-30'
+                }`}
+                style={{
+                  backgroundColor: (flightCategoryStatus.current === 'IFR' || flightCategoryStatus.current === 'LIFR') 
+                    ? '#f87171' : '#4a5568',
+                  borderColor: (flightCategoryStatus.current === 'IFR' || flightCategoryStatus.current === 'LIFR') 
+                    ? '#f87171' : '#6b7280',
+                  boxShadow: (flightCategoryStatus.current === 'IFR' || flightCategoryStatus.current === 'LIFR')
+                    ? '0 0 10px rgba(248, 113, 113, 0.6)' : 'none',
+                }}
+              />
+              <span className="text-[10px] font-mono text-white">IFR</span>
+            </div>
+          </div>
         </div>
-        
-        {flightCategoryStatus.current || flightCategoryStatus.changes.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {/* Current Status */}
-            {flightCategoryStatus.current ? (
+
+        {/* 3. Wind Speed - Compact */}
+        <div className="flex-shrink-0 w-40 p-3 flex flex-col justify-center border-r border-white/20">
+          {metarData && metarData.wind_direction !== undefined && metarData.wind_speed !== undefined ? (
             <div className="flex flex-col gap-1">
-                <div className="text-xs text-gray-400">Current</div>
+              {/* <div className="text-[10px] font-mono text-white uppercase mb-1">Wind</div> */}
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-mono font-bold text-white">
+                  {formatWindDirection(metarData.wind_direction)} @ {metarData.wind_speed}kt
+                </div>
                 <div 
-                  className="text-2xl font-bold"
-                  style={{ color: getFlightCategoryDisplayColor(flightCategoryStatus.current) }}
-                >
-                  {flightCategoryStatus.current}
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{
+                    backgroundColor: getWindSpeedColor(metarData.wind_speed),
+                    boxShadow: `0 0 4px ${getWindSpeedColor(metarData.wind_speed)}80`
+                  }}
+                />
               </div>
+              {/* Compact Radar Chart */}
+              <div className="h-16 w-full mt-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={getRadarChartData()}>
+                    <PolarGrid stroke="#374151" strokeWidth={0.5} />
+                    <PolarAngleAxis 
+                      dataKey="direction" 
+                      tick={{ fontSize: 6, fill: '#6b7280' }}
+                      stroke="#6b7280"
+                    />
+                    <PolarRadiusAxis 
+                      angle={90} 
+                      domain={[0, getMaxWindSpeed()]}
+                      tick={false}
+                      stroke="#6b7280"
+                    />
+                    <Radar
+                      name="Current Wind"
+                      dataKey="currentWindSpeed"
+                      stroke="#67e8f9"
+                      fill="#67e8f9"
+                      fillOpacity={0.5}
+                      strokeWidth={1.5}
+                    />
+                    <Radar
+                      name="Forecast Wind"
+                      dataKey="forecastWindSpeed"
+                      stroke="#fde047"
+                      fill="#fde047"
+                      fillOpacity={0.3}
+                      strokeWidth={1.5}
+                      strokeDasharray="3 3"
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1f2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '4px',
+                        color: '#f3f4f6',
+                        fontSize: '9px'
+                      }}
+                      labelStyle={{ color: '#d1d5db', fontSize: '9px' }}
+                      formatter={(value: any, name: string) => {
+                        if (value === 0) return null;
+                        if (name === 'currentWindSpeed') {
+                          return [`${value} kt`, 'Current'];
+                        } else if (name === 'forecastWindSpeed') {
+                          return [`${value} kt`, 'Forecast'];
+                        }
+                        return [`${value} kt`, name];
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <div className="text-xs text-gray-400">Current</div>
-                <div className="text-sm text-gray-500 italic">
-                  Unknown
-                </div>
-              </div>
-            )}
-            
-            {/* Future Changes */}
-            {flightCategoryStatus.changes.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <div className="text-xs text-gray-400">Upcoming Changes</div>
-                <div className="space-y-2">
-                  {flightCategoryStatus.changes.map((change, idx) => {
-                    const formatChangeTime = (date: Date) => {
-                      const now = new Date();
-                      const diffMs = date.getTime() - now.getTime();
-                      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                      
-                      if (diffHours > 0) {
-                        return `in ${diffHours}h ${diffMinutes}m`;
-                      } else if (diffMinutes > 0) {
-                        return `in ${diffMinutes}m`;
-                      } else {
-                        return 'soon';
-                      }
-                    };
-                    
-                    const timeStr = formatChangeTime(change.time);
-                    const dateStr = change.time.toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit', 
-                      minute: '2-digit', 
-                      hour12: false 
-                    });
-                    
-                    return (
-                      <div key={idx} className="flex flex-col gap-1 p-2 bg-gray-800 rounded border border-gray-700">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="text-lg font-bold"
-                            style={{ color: getFlightCategoryDisplayColor(change.category) }}
-                          >
-                            {change.category}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {timeStr}
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500 font-mono">
-                          {dateStr}
-                        </div>
-                        {change.validTo && (
-                          <div className="text-xs text-gray-500">
-                            Until {change.validTo.toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            
-            {flightCategoryStatus.changes.length === 0 && flightCategoryStatus.current && (
-              <div className="text-xs text-gray-500 italic">
-                No changes forecasted
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-gray-400 text-sm">
-            No flight category data available
-          </div>
-        )}
-      </div>
-
-        {/* Wind Radar Chart Box */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-sm p-3 flex flex-col gap-2" style={{ width: '18%' }}>
-        <div className="text-xs font-semibold text-gray-200 mb-1">
-          Wind Direction & Speed
-        </div>
-        
-        {metarData && metarData.wind_direction !== undefined && metarData.wind_speed !== undefined ? (
-          <div className="flex gap-3 items-center">
-            {/* Text on the left */}
-            <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: '100px' }}>
-              <div className="text-xs text-gray-400">
-                <span className="font-semibold text-gray-300">Current:</span>
-                <div className="mt-1">{metarData.wind_direction}° @ {metarData.wind_speed}kt</div>
-              </div>
-              {(() => {
-                const nextForecast = getNextForecast();
-                if (nextForecast && nextForecast.wind_direction !== undefined && nextForecast.wind_speed !== undefined) {
-                  // Format wind direction for display
-                  const formatWindDirection = (dir: number | string | undefined): string => {
-                    if (dir === undefined || dir === null) return 'Variable';
-                    if (typeof dir === 'string') {
-                      // If it's already a cardinal direction, return it
-                      const upper = dir.toUpperCase().trim();
-                      if (['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'].includes(upper)) {
-                        return upper;
-                      }
-                      // Try to parse as number
-                      const num = parseFloat(dir);
-                      if (!isNaN(num)) {
-                        return `${Math.round(num)}°`;
-                      }
-                      return dir;
-                    }
-                    return `${Math.round(dir)}°`;
-                  };
-                  
-                  return (
-                    <div className="text-xs text-gray-400">
-                      <span className="font-semibold text-yellow-400">Forecast:</span>
-                      <div className="mt-1">{formatWindDirection(nextForecast.wind_direction)} @ {nextForecast.wind_speed}kt</div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
             </div>
-            
-            {/* Radar chart on the right - wider and shorter */}
-            <div className="h-24 flex-1">
+          ) : (
+            <div className="text-gray-500 text-[10px] font-mono text-center">No wind</div>
+          )}
+        </div>
+
+        {/* 4. Weather/Visibility - Compact */}
+        <div className="flex-shrink-0 w-32 p-3 flex flex-col justify-center border-r border-white/20">
+          {/* <div className="text-[10px] font-mono text-white uppercase mb-1">Weather</div> */}
+          {metarData ? (
+            <div className="flex flex-col gap-1">
+              {metarData.temperature !== undefined && (
+                <div className="text-xs font-mono text-white">
+                  {metarData.temperature}°C
+                </div>
+              )}
+              {metarData.visibility !== undefined && (
+                <div className="flex items-center gap-1.5 text-xs font-mono text-white">
+                  <span>{metarData.visibility}mi</span>
+                  <div 
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      backgroundColor: getVisibilityColor(metarData.visibility),
+                      boxShadow: `0 0 4px ${getVisibilityColor(metarData.visibility)}80`
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-white text-[10px] font-mono">No data</div>
+          )}
+        </div>
+
+        {/* 5. Weather Timeline - Large */}
+        <div className="flex-1 min-w-[500px] p-3 flex flex-col gap-2">
+
+          {weatherLoading ? (
+            <div className="text-white text-xs font-mono">Loading...</div>
+          ) : timelineData.length > 0 ? (
+            <div className="h-24 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={getRadarChartData()}>
-                  <PolarGrid stroke="#374151" />
-                  <PolarAngleAxis 
-                    dataKey="direction" 
-                    tick={{ fontSize: 8, fill: '#9ca3af' }}
+                <AreaChart 
+                  data={timelineData.map(d => ({
+                    ...d,
+                    categoryValue: getFlightCategoryValue(d.flightCategory)
+                  }))}
+                >
+                  <defs>
+                    <linearGradient id="vfrGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#86efac" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#86efac" stopOpacity={0.3} />
+                    </linearGradient>
+                    <linearGradient id="mvfrGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fde047" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#fde047" stopOpacity={0.3} />
+                    </linearGradient>
+                    <linearGradient id="ifrGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#f87171" stopOpacity={0.3} />
+                    </linearGradient>
+                    <linearGradient id="unknownGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6b7280" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#6b7280" stopOpacity={0.2} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                  <XAxis 
+                    dataKey="time" 
+                    tick={{ fontSize: 9, fill: '#9ca3af' }}
                     stroke="#6b7280"
+                    interval="preserveStartEnd"
+                    angle={-45}
+                    textAnchor="end"
+                    height={50}
                   />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, getMaxWindSpeed()]}
-                    tick={{ fontSize: 7, fill: '#9ca3af' }}
+                  <YAxis 
+                    domain={[0, 3]}
+                    tick={{ fontSize: 9, fill: '#9ca3af' }}
                     stroke="#6b7280"
+                    width={35}
+                    tickFormatter={(value) => {
+                      if (value === 3) return 'VFR';
+                      if (value === 2) return 'MVFR';
+                      if (value === 1) return 'IFR';
+                      return '';
+                    }}
                   />
-                  {/* Current wind (METAR) */}
-                  <Radar
-                    name="Current Wind"
-                    dataKey="currentWindSpeed"
-                    stroke="#82ca9d"
-                    fill="#82ca9d"
-                    fillOpacity={0.6}
-                    strokeWidth={2}
-                  />
-                  {/* Forecast wind (TAF) */}
-                  <Radar
-                    name="Forecast Wind"
-                    dataKey="forecastWindSpeed"
-                    stroke="#fbbf24"
-                    fill="#fbbf24"
-                    fillOpacity={0.4}
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
                       border: '1px solid #374151',
                       borderRadius: '6px',
                       color: '#f3f4f6',
                       fontSize: '11px'
                     }}
                     labelStyle={{ color: '#d1d5db', fontSize: '11px' }}
-                    formatter={(value: any, name: string) => {
-                      if (value === 0) return null;
-                      if (name === 'currentWindSpeed') {
-                        return [`${value} kt`, 'Current Wind (METAR)'];
-                      } else if (name === 'forecastWindSpeed') {
-                        return [`${value} kt`, 'Forecast Wind (TAF)'];
+                    formatter={(_value: any, _name: string, props: any) => {
+                      const category = props.payload.flightCategory;
+                      if (category) {
+                        return [category, 'Flight Category'];
                       }
-                      return [`${value} kt`, name];
+                      return ['Unknown', 'Flight Category'];
                     }}
                   />
-                </RadarChart>
+                  
+                  {/* Current time marker */}
+                  {(() => {
+                    const now = new Date();
+                    const currentTime = now.getTime();
+                    const currentPoint = timelineData.find(p => Math.abs(p.timestamp - currentTime) < 30 * 60 * 1000);
+                    if (currentPoint) {
+                      return (
+                        <ReferenceLine
+                          x={currentPoint.time}
+                          stroke="#fde047"
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          label={{ value: "Now", position: "top", fill: "#fde047", fontSize: 10 }}
+                        />
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* Flight Category Area - colored by category */}
+                  <Area
+                    type="stepAfter"
+                    dataKey="categoryValue"
+                    stroke="none"
+                    fillOpacity={0.6}
+                  >
+                    {timelineData.map((entry, index) => {
+                      const category = entry.flightCategory;
+                      const upper = category?.toUpperCase() || '';
+                      let fill = '#6b7280';
+                      if (upper === 'VFR') fill = 'url(#vfrGradient)';
+                      else if (upper === 'MVFR') fill = 'url(#mvfrGradient)';
+                      else if (upper === 'IFR' || upper === 'LIFR') fill = 'url(#ifrGradient)';
+                      else fill = 'url(#unknownGradient)';
+                      
+                      return <Cell key={`cell-${index}`} fill={fill} />;
+                    })}
+                  </Area>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        ) : (
-          <div className="text-gray-400 text-xs">
-            No wind data available
-          </div>
-        )}
-      </div>
+          )
+          : (
+            <div className="text-white text-xs font-mono">
+              No weather data available
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+

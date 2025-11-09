@@ -1,20 +1,21 @@
 import { AirplaneTracker } from "@/components/AirplaneTracker";
-import Chat from "@/components/Chat";
 import Graphs from "@/components/Graphs";
 import Tasks from "@/components/Tasks";
 
 export default function Home() {
   return (
-    <main className="h-screen w-screen grid grid-rows-[1fr_3fr] grid-cols-4">
-      {/* Graphs: Top 1/4, full width */}
-      <div className="col-span-4 row-span-1">
-        <Graphs />
+    <main className="h-screen w-screen flex relative">
+      {/* Left side: AirplaneTracker (3/4 width) with Graphs overlay */}
+      <div className="w-3/4 h-full relative">
+        <AirplaneTracker />
+        {/* Graphs overlay on top of AirplaneTracker */}
+        <div className="absolute top-0 left-0 w-full z-10">
+          <Graphs />
+        </div>
       </div>
       
-      <div className="col-span-3 row-span-1">
-        <AirplaneTracker />
-      </div>
-      <div className="col-span-1 row-span-1">
+      {/* Right side: Tasks (1/4 width) */}
+      <div className="w-1/4 h-full">
         <Tasks />
       </div>
     </main>

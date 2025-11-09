@@ -516,20 +516,22 @@ export function AirplaneTracker() {
               ['==', ['get', 'color'], '#00ff00'], 'airplane-icon-#00ff00',
               'airplane-icon-#0088ff'
             ],
-            'icon-size': 1.5,
+            'icon-size': 1.2, // Fixed size regardless of zoom
             'icon-rotate': ['get', 'bearing'],
             'icon-rotation-alignment': 'map',
             'icon-pitch-alignment': 'map',
-            'icon-allow-overlap': false,
-            'icon-ignore-placement': false
-          }
+            'icon-allow-overlap': true, // Show all icons even if they overlap
+            'icon-ignore-placement': true // Ignore collision detection - show all icons
+          },
+          minzoom: 0, // Always visible at all zoom levels
+          maxzoom: 24
         });
       }).catch(error => {
         console.error('Error loading airplane icons:', error);
       });
 
       // Add click handler for single click (show info) and double-click (zoom)
-      let clickTimeout: NodeJS.Timeout | null = null;
+      let clickTimeout: number | null = null;
       map.current.on('click', 'airplanes-icons', (e) => {
         if (!e.features || e.features.length === 0) return;
         
@@ -637,10 +639,18 @@ export function AirplaneTracker() {
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="absolute inset-0" />
+      
+      {/* Vignette overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.4) 100%)',
+        }}
+      />
 
       {/* Info card - appears when airplane is clicked */}
       {selectedPlane && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-lg shadow-xl max-w-xs z-20 border border-gray-700">
+        <div className="absolute bottom-4 right-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-lg shadow-xl max-w-xs z-20 border border-gray-700">
         <div className="text-sm space-y-2">
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-bold text-base">Aircraft Info</h3>
