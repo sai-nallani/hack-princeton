@@ -35,6 +35,48 @@ RESOLVED_TASK_RETENTION_HOURS = int(os.getenv("RESOLVED_TASK_RETENTION_HOURS", "
 DEBUG_AGENT_STEPS = os.getenv("DEBUG_AGENT_STEPS", "true").lower() == "true"
 DEBUG_LOG_FILE = Path(__file__).parent / "agent_debug.log"
 
+# Audio storage
+AUDIO_DIR = Path(__file__).parent / "audio"
+AUDIO_DIR.mkdir(exist_ok=True)
+
+
+async def generate_audio_for_task(task_id: int, pilot_message: str) -> Optional[str]:
+    """
+    Generate audio file for a task's pilot message using ElevenLabs TTS.
+    
+    Args:
+        task_id: The task ID
+        pilot_message: The message to convert to speech
+    
+    Returns:
+        Filename of the generated audio file, or None if failed
+    """
+    try:
+        from services.tts_api import tts_api
+        
+        if not tts_api.client:
+            print(f"⚠️  Skipping audio generation for task {task_id} - TTS not configured")
+            return None
+        
+        filename = f"task_{task_id}.mp3"
+        filepath = AUDIO_DIR / filename
+        
+        # Generate audio
+        print(f"🔊 Generating audio for task {task_id}...")
+        audio_generator = tts_api.text_to_speech(pilot_message)
+        audio_data = b"".join(audio_generator)
+        
+        # Save to file
+        with open(filepath, 'wb') as f:
+            f.write(audio_data)
+        
+        print(f"✓ Audio saved: {filename}")
+        return filename
+        
+    except Exception as e:
+        print(f"❌ Error generating audio for task {task_id}: {e}")
+        return None
+
 
 def get_redis_planes() -> List[Dict]:
     """
@@ -205,7 +247,9 @@ Return your response as a JSON object with a "tasks" key containing an array of 
 - "aircraft_callsign": string (Use N-number if available, airline callsign, or Registration - format as "N12345" or "AAL123" - NEVER "UNKNOWN")
 - "priority": string (HIGH/MEDIUM/LOW)
 - "category": string (from the categories above)
-- "description": string (detailed FAA-compliant description with web research citations - include aircraft N-number or callsign)
+- "summary": string (VERY brief 5-10 word summary for quick scanning, e.g., "Low altitude - verify MVA clearance" or "Possible Class B penetration without clearance")
+- "description": string (detailed FAA-compliant description with web research citations - include aircraft N-number or callsign, full technical details)
+- "pilot_message": string (concise ATC radio message to be spoken to pilot, using proper phraseology, e.g., "November 12345, Atlanta Center, low altitude alert, verify you are not below minimum vectoring altitude, advise intentions")
 
 CRITICAL REQUIREMENTS:
 - ALWAYS search FAA/NWS sources: notams.aim.faa.gov, aviationweather.gov, tfr.faa.gov
@@ -379,6 +423,14 @@ async def analyze_with_dedalus(planes: List[Dict], weather_data: Optional[Dict] 
             task["id"] = abs(hash(fingerprint)) % 1000000  # Stable ID from fingerprint
             task["created_at"] = datetime.now(timezone.utc).isoformat()
             task["resolved"] = False
+            
+            # Generate audio file for pilot message if available
+            pilot_message = task.get('pilot_message')
+            if pilot_message:
+                audio_filename = await generate_audio_for_task(task["id"], pilot_message)
+                task["audio_file"] = audio_filename
+            else:
+                task["audio_file"] = None
         
         print(f"Dedalus AI generated {len(tasks)} tasks")
         return tasks

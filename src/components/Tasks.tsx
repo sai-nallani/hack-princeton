@@ -6,7 +6,10 @@ interface Task {
   aircraft_callsign: string;
   priority: string;
   category: string;
+  summary?: string;
   description: string;
+  pilot_message?: string;
+  audio_file?: string;
   created_at: string;
   resolved: boolean;
   fingerprint?: string;
@@ -17,6 +20,8 @@ export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedTask, setExpandedTask] = useState<number | null>(null);
+  const [approvingTask, setApprovingTask] = useState<number | null>(null);
 
   // Custom scrollbar styles
   const scrollbarStyles = {
@@ -107,6 +112,77 @@ export default function Tasks() {
     }
   };
 
+  const handleApprove = async (task: Task) => {
+    if (!task.audio_file && !task.pilot_message) {
+      alert('No audio or pilot message available for this task');
+      return;
+    }
+
+    setApprovingTask(task.id);
+    try {
+      let audio: HTMLAudioElement;
+
+      if (task.audio_file) {
+        // Use pre-generated audio file
+        console.log('Playing pre-generated audio:', task.audio_file);
+        const audioUrl = `http://localhost:8000/api/tasks/audio/${task.audio_file}`;
+        audio = new Audio(audioUrl);
+      } else {
+        // Fallback: generate audio on-demand (if no pre-generated file)
+        console.log('Generating audio on-demand for:', task.pilot_message);
+        alert('⚠️ Audio not pre-generated. Message:\n\n' + task.pilot_message);
+        return;
+      }
+
+      audio.onended = async () => {
+        console.log(`✓ Task ${task.id} audio playback completed`);
+        
+        // Mark task as resolved and remove from UI
+        await resolveTask(task.id);
+      };
+
+      audio.onerror = () => {
+        throw new Error('Failed to play audio');
+      };
+
+      await audio.play();
+      console.log('🔊 Playing audio for task', task.id);
+    } catch (err) {
+      console.error('Error approving task:', err);
+      alert(`Failed to play message: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setApprovingTask(null);
+    }
+  };
+
+  const resolveTask = async (taskId: number) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/tasks/resolve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ task_id: taskId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to resolve task');
+      }
+
+      // Remove task from UI
+      setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+      setApprovingTask(null);
+      console.log(`✓ Task ${taskId} resolved and removed from UI`);
+    } catch (err) {
+      console.error('Error resolving task:', err);
+      setApprovingTask(null);
+    }
+  };
+
+  const handleDeny = async (task: Task) => {
+    console.log(`Task ${task.id} denied`);
+    await resolveTask(task.id);
+  };
+
   return (
     <div className="h-full w-full bg-gray-50 flex flex-col">
       {/* Header */}
@@ -155,7 +231,7 @@ export default function Tasks() {
             {tasks.map((task) => (
               <div
                 key={task.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow min-h-[180px]"
+                className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
               >
                 {/* Task Header */}
                 <div className="flex items-start justify-between mb-2">
@@ -180,19 +256,69 @@ export default function Tasks() {
                       {task.aircraft_callsign || task.aircraft_icao24 || 'Unknown Aircraft'}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {formatTime(task.created_at)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">
+                      {formatTime(task.created_at)}
+                    </span>
+                    <button
+                      onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                      title={expandedTask === task.id ? "Hide details" : "Show full details"}
+                      aria-label="Toggle details"
+                    >
+                      <svg 
+                        className={`w-4 h-4 transition-transform ${expandedTask === task.id ? 'rotate-180' : ''}`}
+                        fill="currentColor" 
+                        viewBox="0 0 20 20"
+                      >
+                        <path 
+                          fillRule="evenodd" 
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+                          clipRule="evenodd" 
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Task Description */}
-                <p className="text-sm text-gray-700 mt-2">{task.description}</p>
+                {/* Task Summary */}
+                <p className="text-sm text-gray-800 font-medium mb-2">
+                  {task.summary || `${task.category} - ${task.aircraft_callsign}`}
+                </p>
 
-                {/* Aircraft Info */}
-                <div className="mt-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">
-                    ICAO24: <span className="font-mono">{task.aircraft_icao24}</span>
-                  </p>
+                {/* Expanded Details */}
+                {expandedTask === task.id && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Full Details:</p>
+                    <p className="text-xs text-gray-700 mb-2">{task.description}</p>
+                    <div className="border-t border-gray-300 pt-2 mt-2">
+                      <p className="text-xs text-gray-500">
+                        ICAO24: <span className="font-mono">{task.aircraft_icao24}</span>
+                      </p>
+                      {task.pilot_message && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          <span className="font-semibold">Pilot Message:</span> {task.pilot_message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => handleApprove(task)}
+                    disabled={approvingTask === task.id || !task.audio_file}
+                    className="flex-1 px-3 py-2 bg-green-500 text-white text-sm font-medium rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {approvingTask === task.id ? '🔊 Playing...' : '✓ Approve & Send'}
+                  </button>
+                  <button
+                    onClick={() => handleDeny(task)}
+                    className="flex-1 px-3 py-2 bg-red-500 text-white text-sm font-medium rounded hover:bg-red-600 transition-colors"
+                  >
+                    ✗ Deny
+                  </button>
                 </div>
               </div>
             ))}

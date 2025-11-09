@@ -54,3 +54,11 @@ __pycache__/
 venv/
 env/
 ENV/
+
+# Generated audio files
+services/audio/
+*.mp3
+
+# data
+tasks.json
+audio/
