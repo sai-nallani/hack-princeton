@@ -44,9 +44,12 @@ async def get_tasks() -> List[Dict]:
     try:
         # Simply get active tasks - analysis runs continuously in background
         tasks = get_active_tasks()
-        
+        print(f"📋 Returning {len(tasks)} active tasks to frontend")
         return tasks
     except Exception as e:
+        print(f"❌ Error in get_tasks endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error getting tasks: {str(e)}")
 
 

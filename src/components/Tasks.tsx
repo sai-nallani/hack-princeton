@@ -38,6 +38,38 @@ export default function Tasks() {
     return ranks[priority.toUpperCase()] || 999;
   };
 
+  const getPriorityColor = (priority: string): string => {
+    const colors: Record<string, string> = {
+      'HIGH': 'bg-red-100 text-red-800',
+      'MEDIUM': 'bg-yellow-100 text-yellow-800',
+      'LOW': 'bg-blue-100 text-blue-800',
+    };
+    return colors[priority.toUpperCase()] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getCategoryColor = (category: string): string => {
+    const colors: Record<string, string> = {
+      'WEATHER': 'bg-purple-100 text-purple-800',
+      'CONFLICT': 'bg-orange-100 text-orange-800',
+      'TERRAIN': 'bg-green-100 text-green-800',
+      'ALTITUDE': 'bg-indigo-100 text-indigo-800',
+    };
+    return colors[category.toUpperCase()] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString();
+  };
+
   const fetchTasks = async () => {
     try {
       setLoading(true);
@@ -69,48 +101,11 @@ export default function Tasks() {
     fetchTasks();
     
     // Refresh tasks every 10 seconds
-    const interval = setInterval(fetchTasks, 60000);
+    const interval = setInterval(fetchTasks, 10000);
     
     return () => clearInterval(interval);
   }, []);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toUpperCase()) {
-      case 'HIGH':
-        return 'bg-red-500 text-white';
-      case 'MEDIUM':
-        return 'bg-yellow-500 text-white';
-      case 'LOW':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      'Weather Hazard': 'bg-orange-100 text-orange-800',
-      'Low Altitude': 'bg-red-100 text-red-800',
-      'Unusual Pattern': 'bg-purple-100 text-purple-800',
-      'Speed Warning': 'bg-yellow-100 text-yellow-800',
-      'Altitude Warning': 'bg-pink-100 text-pink-800',
-      'Other': 'bg-gray-100 text-gray-800',
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
-
-  const formatTime = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        second: '2-digit'
-      });
-    } catch {
-      return 'Unknown';
-    }
-  };
 
   const handleApprove = async (task: Task) => {
     if (!task.audio_file && !task.pilot_message) {
@@ -184,26 +179,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="h-full w-full bg-gray-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-sm text-gray-500">
-            {tasks.length} active task{tasks.length !== 1 ? 's' : ''}
-            {tasks.length > 3 && <span className="ml-1">(showing 3, scroll for more)</span>}
-          </p>
-        </div>
-        <button
-          onClick={fetchTasks}
-          disabled={loading}
-          className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Loading...' : 'Refresh'}
-        </button>
-      </div>
-
-      {/* Content - Fixed height to show ~3 tasks */}
+    <div className="h-full w-full bg-black flex flex-col">
       <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 120px)' }}>
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
