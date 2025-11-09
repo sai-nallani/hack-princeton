@@ -13,3 +13,5 @@ pydantic==2.11.7
 requests==2.32.3
 metar-taf-parser-mivek
 pandas==2.2.3
+dedalus-labs==0.0.1
+elevenlabs==2.22.0
