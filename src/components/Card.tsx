@@ -397,7 +397,7 @@ export default function Card({ task, onTaskResolved }: CardProps) {
               : 'bg-green-600 hover:bg-green-700 text-white'
           }`}
         >
-          {isProcessing && task.audio_file ? '🔊 Playing...' : '✓ Accept'}
+          {isProcessing && task.audio_file ? 'Sending...' : '✓ Send'}
         </button>
         <button
           onClick={handleReject}
