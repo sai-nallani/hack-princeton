@@ -1,4 +1,4 @@
-Amelia - HackPrinceton 2025
+# Amelia - HackPrinceton 2025
 Cursor for Air Traffic Controllers. 
 
 Installation directions
