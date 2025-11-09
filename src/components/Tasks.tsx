@@ -82,7 +82,7 @@ export default function Tasks() {
 
   return (
     <div className="h-full w-full bg-black flex flex-col">
-      <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+      <div className="flex-1 overflow-y-auto p-4">
         {error && (
           <div className="bg-slate-900 border border-slate-800 text-slate-300 px-4 py-3 mb-4">
             <p className="font-semibold text-sm">Error</p>
@@ -103,7 +103,7 @@ export default function Tasks() {
           </div>
         ) : (
           <div 
-            className="space-y-2 max-h-[600px] overflow-y-auto pr-2"
+            className="space-y-2 pr-2"
             style={scrollbarStyles}
           >
             {tasks.map((task) => (
